@@ -13,21 +13,20 @@ class LojaController
     /* =========================================================
        LISTAR LOJAS
     ==========================================================*/
-    public function index()
-    {
-        $lojaModel = new Loja();
-        $lojas = $lojaModel->listar();
+	public function index()
+	{
+		$lojaModel = new Loja();
+		$lojas = $lojaModel->listarComUltimoContrato(); // <-- usar o método novo
 
-        $storageUrl = '/storage/uploads/lojas/';
+		$storageUrl = '/storage/uploads/lojas/';
 
-        ob_start();
-        require __DIR__ . '/../Views/lojas/index.php';
-        $content = ob_get_clean();
+		ob_start();
+		require __DIR__ . '/../Views/lojas/index.php';
+		$content = ob_get_clean();
 
-        $title = "Lojas";
-        require __DIR__ . '/../Views/layout/layout.php';
-    }
-
+		$title = "Lojas";
+		require __DIR__ . '/../Views/layout/layout.php';
+	}
     /* =========================================================
        FORM CREATE
     ==========================================================*/
@@ -41,9 +40,6 @@ class LojaController
         require __DIR__ . '/../Views/layout/layout.php';
     }
 
-    /* =========================================================
-       STORE
-    ==========================================================*/
 	/* =========================================================
 	   STORE
 	==========================================================*/

@@ -15,12 +15,16 @@ class Torneio
     }
 
     // Busca dados básicos de um torneio
-    public function buscar($id_torneio, $id_loja)
-    {
-        $stmt = $this->db->prepare("SELECT * FROM torneios WHERE id_torneio = ? AND id_loja = ?");
-        $stmt->execute([$id_torneio, $id_loja]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
+	public function buscar($id_torneio, $id_loja)
+	{
+		$sql = "SELECT t.*, c.nome AS cardgame
+				FROM torneios t
+				LEFT JOIN cardgames c ON t.id_cardgame = c.id_cardgame
+				WHERE t.id_torneio = ? AND t.id_loja = ?";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$id_torneio, $id_loja]);
+		return $stmt->fetch(PDO::FETCH_ASSOC);
+	}
 
     //listar todos os torneios criados na loja.
     public function listarTodos($id_loja)
@@ -54,21 +58,24 @@ class Torneio
         return $tipos[$tipo] ?? $tipo;
     }
 
-public function listarClientesParaTorneio($id_loja, $id_cardgame)
-{
-    $sql = "SELECT c.id_cliente, c.nome, c.documento
-            FROM clientes c
-            INNER JOIN clientes_lojas cl ON c.id_cliente = cl.id_cliente
-            INNER JOIN clientes_cardgames cc ON c.id_cliente = cc.id_cliente
-            WHERE cl.id_loja = ?
-            AND cc.id_cardgame = ?
-            AND cl.status = 'ativo'
-            ORDER BY c.nome ASC";
+	public function listarClientesParaTorneio($id_loja, $id_cardgame, $id_torneio = null)
+	{
+		$sql = "SELECT c.id_cliente, c.nome, c.documento,
+					   CASE WHEN tp.id_cliente IS NOT NULL THEN 1 ELSE 0 END AS inscrito
+				FROM clientes c
+				INNER JOIN clientes_lojas cl ON c.id_cliente = cl.id_cliente
+				INNER JOIN clientes_cardgames cc ON c.id_cliente = cc.id_cliente
+				LEFT JOIN torneio_participantes tp
+					   ON tp.id_cliente = c.id_cliente AND tp.id_torneio = ?
+				WHERE cl.id_loja = ?
+				  AND cc.id_cardgame = ?
+				  AND cl.status = 'ativo'
+				ORDER BY c.nome ASC";
 
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute([$id_loja, $id_cardgame]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$id_torneio, $id_loja, $id_cardgame]);
+		return $stmt->fetchAll(PDO::FETCH_ASSOC);
+	}
 
 	public function salvar($dados)
 	{
@@ -108,22 +115,22 @@ public function listarClientesParaTorneio($id_loja, $id_cardgame)
 		}
     }
 
-    public function vincularParticipantes($id_torneio, $participantes)
+	public function vincularParticipantes($idTorneio, $selecionados)
 	{
-		// Limpa vínculos anteriores para permitir edição da lista antes do torneio começar
-		$stmt = $this->db->prepare("DELETE FROM torneio_participantes WHERE id_torneio = ?");
-		$stmt->execute([$id_torneio]);
+		// Remove vínculos antigos
+		$sql = "DELETE FROM torneio_participantes WHERE id_torneio = ?";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$idTorneio]);
 
-		if (!empty($participantes)) {
-			$sql = "INSERT INTO torneio_participantes (id_torneio, id_cliente) VALUES (?, ?)";
-			$stmt = $this->db->prepare($sql);
+		// Insere os novos vínculos
+		$sql = "INSERT INTO torneio_participantes (id_torneio, id_cliente) VALUES (?, ?)";
+		$stmt = $this->db->prepare($sql);
 
-			foreach ($participantes as $id_cliente) {
-				$stmt->execute([$id_torneio, $id_cliente]);
-			}
+		foreach ($selecionados as $idCliente) {
+			$stmt->execute([$idTorneio, $idCliente]);
 		}
-		return true;
-    }
+	}
+
 
 	public function excluirTorneioCompleto($id_torneio, $id_loja) {
 		try {
@@ -153,5 +160,37 @@ public function listarClientesParaTorneio($id_loja, $id_cardgame)
 			$this->db->rollBack();
 			return false;
 		}
+    }
+
+	public function inscreverParticipante($id_torneio, $id_cliente) {
+		$sql = "INSERT IGNORE INTO torneio_participantes (id_torneio, id_cliente) VALUES (?, ?)";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$id_torneio, $id_cliente]);
 	}
+
+    public function buscarPublico($id_torneio)
+    {
+    $sql = "SELECT t.*, c.nome AS cardgame
+            FROM torneios t
+            LEFT JOIN cardgames c ON t.id_cardgame = c.id_cardgame
+            WHERE t.id_torneio = ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute([$id_torneio]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+public function listarParticipantesConfirmados($idTorneio)
+{
+    $sql = "SELECT c.id_cliente, c.nome
+            FROM torneio_participantes tp
+            JOIN clientes c ON c.id_cliente = tp.id_cliente
+            WHERE tp.id_torneio = ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute([$idTorneio]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+
+
+
 }

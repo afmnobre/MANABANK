@@ -135,5 +135,14 @@ class Contrato
 		return $stmt->fetchAll(PDO::FETCH_ASSOC);
 	}
 
+    // Em admin/Models/Contrato.php
+    public function totalAtivos()
+    {
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM contratos WHERE status = 'ativo'");
+        $stmt->execute();
+        return $stmt->fetchColumn();
+    }
+
+
 }
 

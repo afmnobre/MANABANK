@@ -297,39 +297,41 @@ public function excluir($id_pedido)
         $stmt->execute(['id_cliente' => $id_cliente]);
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
+
      public function listarTiposPagamento() {
      $sql = "SELECT * FROM tipos_pagamento ORDER BY nome ASC";
      $stmt = $this->db->query($sql);
      return $stmt->fetchAll(PDO::FETCH_ASSOC);
      }
-        // Buscar todos os pedidos
+
+    // Buscar todos os pedidos
     public function listarPedidos() {
         $sql = "SELECT * FROM pedidos ORDER BY id_pedido DESC";
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-public function salvarTiposPagamento($idPedido, $pagamentos) {
-    // Apaga pagamentos antigos
-    $stmtDelete = $this->db->prepare("DELETE FROM pedido_pagamento WHERE id_pedido = :id_pedido");
-    $stmtDelete->execute(['id_pedido' => $idPedido]);
+	public function salvarTiposPagamento($idPedido, $pagamentos) {
+		// Apaga pagamentos antigos
+		$stmtDelete = $this->db->prepare("DELETE FROM pedido_pagamento WHERE id_pedido = :id_pedido");
+		$stmtDelete->execute(['id_pedido' => $idPedido]);
 
-    // Insere novos com valor
-    $sqlInsert = "INSERT INTO pedido_pagamento (id_pedido, id_pagamento, valor)
-                  VALUES (:id_pedido, :id_pagamento, :valor)";
-    $stmtInsert = $this->db->prepare($sqlInsert);
+		// Insere novos com valor
+		$sqlInsert = "INSERT INTO pedido_pagamento (id_pedido, id_pagamento, valor)
+					  VALUES (:id_pedido, :id_pagamento, :valor)";
+		$stmtInsert = $this->db->prepare($sqlInsert);
 
-    foreach ($pagamentos as $idPagamento => $valor) {
-        $valor = floatval(str_replace(',', '.', $valor));
-        if ($valor > 0) {
-            $stmtInsert->execute([
-                'id_pedido'   => $idPedido,
-                'id_pagamento'=> $idPagamento,
-                'valor'       => $valor
-            ]);
-        }
-    }
-}
+		foreach ($pagamentos as $idPagamento => $valor) {
+			$valor = floatval(str_replace(',', '.', $valor));
+			if ($valor > 0) {
+				$stmtInsert->execute([
+					'id_pedido'   => $idPedido,
+					'id_pagamento'=> $idPagamento,
+					'valor'       => $valor
+				]);
+			}
+		}
+	}
 
 }
 

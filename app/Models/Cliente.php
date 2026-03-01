@@ -179,5 +179,15 @@ class Cliente
         ]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+	public function buscarPorCelular($telefone)
+	{
+		$sql = "SELECT * FROM clientes WHERE telefone = ?";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$telefone]);
+		return $stmt->fetch(PDO::FETCH_ASSOC);
+	}
+
+
 }
 

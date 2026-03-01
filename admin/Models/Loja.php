@@ -85,7 +85,42 @@ class Loja
 		$stmt->execute([
 			'id_loja' => $id_loja
 		]);
+    }
+
+	public function listarComUltimoContrato()
+	{
+		$stmt = $this->db->prepare("
+			SELECT l.*,
+				   c.id_contrato,
+				   c.tipo AS tipo_contrato,
+				   c.data_inicio AS data_inicio_contrato,
+				   c.data_fim AS data_fim_contrato,
+				   c.status AS status_contrato
+			FROM lojas l
+			LEFT JOIN contratos c
+				ON c.id_loja = l.id_loja
+				AND c.status = 'ativo'
+			AND c.data_inicio = (
+				SELECT MAX(c2.data_inicio)
+				FROM contratos c2
+				WHERE c2.id_loja = l.id_loja
+			)
+			ORDER BY l.id_loja ASC
+		");
+		$stmt->execute();
+		$lojas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+		// Preparar campo para exibir na tabela
+		foreach ($lojas as &$loja) {
+			$loja['contrato_ativo'] = !empty($loja['id_contrato'])
+				? "Contrato #{$loja['id_contrato']} ({$loja['tipo_contrato']})"
+				: null;
+		}
+
+		return $lojas;
 	}
+
+
 
 }
 

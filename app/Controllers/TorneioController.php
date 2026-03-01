@@ -63,26 +63,39 @@ class TorneioController extends Controller
     }
 
     // Gerencia quem vai jogar (participante.php)
-    public function participante($id_torneio)
+    public function participantes($id_torneio)
     {
         AuthMiddleware::verificarLogin();
-        $id_loja = $_SESSION['LOJA']['id_loja'];
         $model = new Torneio();
+        $id_loja = $_SESSION['LOJA']['id_loja'];
 
-        // 1. Busca os dados do torneio para saber qual o id_cardgame
+        // Busca os dados do torneio
         $torneio = $model->buscar($id_torneio, $id_loja);
-
         if (!$torneio) {
-            header("Location: /torneio/index?erro=torneio_nao_encontrado");
+            header("Location: /torneio/index?erro=nao_encontrado");
             exit;
         }
 
-        // 2. Busca os clientes filtrados por LOJA e por CARDGAME do torneio
-        $clientes = $model->listarClientesParaTorneio($id_loja, $torneio['id_cardgame']);
+        // Busca o nome do cardgame
+        $cgModel = new CardGame();
+        $dadosCG = $cgModel->buscar($torneio['id_cardgame']);
+        $torneio['cardgame'] = $dadosCG['nome'] ?? 'N/A';
+
+        // Tipo legível
+        $tipos = [
+            'suico_bo1' => 'Suíço (MD1)',
+            'suico_bo3' => 'Suíço (MD3)',
+            'elim_dupla_bo1' => 'Eliminação Dupla (MD1)',
+            'elim_dupla_bo3' => 'Eliminação Dupla (MD3)'
+        ];
+        $torneio['tipo_legivel'] = $tipos[$torneio['tipo_torneio']] ?? $torneio['tipo_torneio'];
+
+        // Busca clientes da loja + cardgame + se já estão inscritos
+        $participantes = $model->listarClientesParaTorneio($id_loja, $torneio['id_cardgame'], $id_torneio);
 
         $this->view('torneio/participantes', [
             'torneio' => $torneio,
-            'clientes' => $clientes
+            'participantes' => $participantes
         ]);
     }
 
@@ -129,22 +142,20 @@ class TorneioController extends Controller
 		$model = new Torneio();
 		$id_loja = $_SESSION['LOJA']['id_loja'];
 
-		// 1. Busca os dados brutos do torneio
+		// Busca os dados do torneio
 		$torneio = $model->buscar($id_torneio, $id_loja);
-
 		if (!$torneio) {
 			header("Location: /torneio/index?erro=nao_encontrado");
 			exit;
 		}
 
-		// 2. BUSCA O NOME DO CARDGAME (Para resolver a linha 3 da view)
-		// Se você já tiver um método getNomeCardGame, use-o, senão podemos injetar manualmente:
+		// Busca o nome do cardgame
 		require_once __DIR__ . '/../Models/CardGame.php';
 		$cgModel = new CardGame();
-		$dadosCG = $cgModel->buscar($torneio['id_cardgame']); // Ajuste o nome do método conforme seu model
+		$dadosCG = $cgModel->buscar($torneio['id_cardgame']);
 		$torneio['cardgame'] = $dadosCG['nome'] ?? 'N/A';
 
-		// 3. CRIA O TIPO LEGÍVEL (Para resolver a linha 4 da view)
+		// Tipo legível
 		$tipos = [
 			'suico_bo1' => 'Suíço (MD1)',
 			'suico_bo3' => 'Suíço (MD3)',
@@ -153,14 +164,15 @@ class TorneioController extends Controller
 		];
 		$torneio['tipo_legivel'] = $tipos[$torneio['tipo_torneio']] ?? $torneio['tipo_torneio'];
 
-		// 4. Busca os clientes filtrados
-		$clientes = $model->listarClientesParaTorneio($id_loja, $torneio['id_cardgame']);
+		// Busca clientes filtrados
+		$participantes = $model->listarClientesParaTorneio($id_loja, $torneio['id_cardgame'], $id_torneio);
 
 		$this->view('torneio/participantes', [
 			'torneio' => $torneio,
-			'clientes' => $clientes
+			'participantes' => $participantes
 		]);
 	}
+
 
 	public function salvarParticipantes()
 	{
@@ -208,5 +220,89 @@ class TorneioController extends Controller
 
 		header("Location: /torneio");
 		exit;
+    }
+
+public function inscricaoQRCode($id_torneio) {
+    AuthMiddleware::verificarLogin();
+    $model = new Torneio();
+    $torneio = $model->buscar($id_torneio, $_SESSION['LOJA']['id_loja']);
+
+    require_once __DIR__ . '/../Models/Loja.php';
+    $loja = Loja::buscarPorId($_SESSION['LOJA']['id_loja']);
+
+    $this->rawView('torneio/inscricao_qrcode', [
+        'torneio' => $torneio,
+        'loja' => $loja
+    ]);
+}
+
+
+
+
+
+public function inscricao($id_torneio) {
+    $model = new Torneio();
+    $torneio = $model->buscar($id_torneio, $_SESSION['LOJA']['id_loja']);
+    $loja = Loja::buscarPorId($torneio['id_loja']);
+
+    $this->rawView('torneio/inscricao', [
+        'torneio' => $torneio,
+        'loja' => $loja
+    ]);
+}
+
+
+
+
+
+	public function confirmarInscricao() {
+		$dados = $_POST;
+		$celular = preg_replace('/\D/', '', $dados['celular']);
+		$idTorneio = (int)$dados['id_torneio'];
+
+		$clienteModel = new Cliente();
+		$torneioModel = new Torneio();
+
+		$cliente = $clienteModel->buscarPorCelular($celular);
+
+		if ($cliente) {
+			$torneioModel->inscreverParticipante($idTorneio, $cliente['id_cliente']);
+			header("Location: /torneio/participantes/$idTorneio");
+			exit;
+		} else {
+			echo "Celular não encontrado. Procure a organização.";
+		}
+    }
+
+
+    /**
+     * Endpoint para AJAX: retorna apenas HTML da lista de participantes
+     */
+public function listarAjax($id_torneio)
+{
+    AuthMiddleware::verificarLogin();
+    $model = new Torneio();
+
+    // Busca dados do torneio
+    $torneio = $model->buscar($id_torneio, $_SESSION['LOJA']['id_loja']);
+
+    // Lista todos os clientes da loja e cardgame, marcando quem já está inscrito
+    $clientes = $model->listarClientesParaTorneio($_SESSION['LOJA']['id_loja'], $torneio['id_cardgame'], $id_torneio);
+
+    // Renderiza checkboxes
+	foreach ($clientes as $cliente) {
+		echo '<div class="col-md-6 mb-2 item-jogador" data-nome="'.strtolower(htmlspecialchars($cliente['nome'])).'">';
+		echo '<label class="list-group-item bg-dark text-light border-secondary d-flex justify-content-between align-items-center py-3 px-3 rounded" style="cursor: pointer; border: 1px solid #444;">';
+		echo '<div class="text-truncate d-flex align-items-center">';
+		echo '<input type="checkbox" name="participantes[]" value="'.$cliente['id_cliente'].'" class="form-check-input me-3" style="flex-shrink: 0;" '.($cliente['inscrito'] ? 'checked' : '').'>';
+		echo '<div class="text-truncate">';
+		echo '<span class="fw-bold text-light nome-texto">'.htmlspecialchars($cliente['nome']).'</span>';
+		echo '</div></div>';
+		echo '<span class="badge rounded-pill bg-secondary text-dark d-none d-lg-inline ms-3">Cliente</span>';
+		echo '</label></div>';
 	}
+
+}
+
+
 }

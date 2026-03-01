@@ -20,7 +20,27 @@ class PedidoController extends Controller
         $produtos = $produtoModel->listarAtivosPorLoja($_SESSION['LOJA']['id_loja']);
         $cardgames = $pedidoModel->listarCardgames();
         $pedidos = $pedidoModel->listarPedidos();
-        $tipos_pagamento = $pedidoModel->listarTiposPagamento();
+		$tipos_pagamento_raw = $pedidoModel->listarTiposPagamento();
+
+		// garantir que seja array
+		if (!is_array($tipos_pagamento_raw)) {
+			$tipos_pagamento_raw = [];
+		}
+
+		// remover duplicados por id_pagamento
+		$tipos_pagamento_unicos = [];
+		foreach ($tipos_pagamento_raw as $tp) {
+			$id = (int)$tp['id_pagamento'];
+			if (!isset($tipos_pagamento_unicos[$id])) {
+				$tipos_pagamento_unicos[$id] = $tp;
+			}
+		}
+
+		// reindexar e ordenar pelo nome
+        $tipos_pagamento = array_values($tipos_pagamento_unicos);
+
+		usort($tipos_pagamento, fn($a, $b) => strcmp($a['nome'], $b['nome']));
+
 
         $hoje = date('Y-m-d');
         $dataSelecionada = $_GET['data'] ?? $hoje;
@@ -194,20 +214,14 @@ class PedidoController extends Controller
                 }
             }
         }
+        $queryParams = ['data' => $dataSelecionada];
 
-
-
-$queryParams = ['data' => $dataSelecionada];
-
-if (!empty($dados['cardgamesSelecionados'])) {
-    // usa o mesmo nome "cardgames" que a view espera
-    $queryParams['cardgames'] = $dados['cardgamesSelecionados'];
+        if (!empty($dados['cardgames'])) {
+            $queryParams['cardgames'] = $dados['cardgames'];
+        }
+        header("Location: /pedido/index?" . http_build_query($queryParams, '', '&'));
+        exit;
 }
-
-header("Location: /pedido/index?" . http_build_query($queryParams, '', '&'));
-exit;
-
-    }
 
 public function salvarPagamento() {
     AuthMiddleware::verificarLogin();
@@ -270,18 +284,19 @@ public function salvarPagamento() {
         }
     }
 
-    // Redireciona de volta para a tela de pedidos mantendo filtros
-    $queryParams = ['data' => $dados['dataSelecionada'] ?? date('Y-m-d')];
+            // Redireciona de volta para a tela de pedidos mantendo filtros
+		$queryParams = ['data' => $dados['dataSelecionada']];
 
-    if (!empty($dados['cardgamesSelecionados'])) {
-        foreach ($dados['cardgamesSelecionados'] as $cg) {
-            $queryParams['cardgames'][] = $cg;
-        }
+		if (!empty($dados['cardgamesSelecionados'])) {
+			foreach ($dados['cardgamesSelecionados'] as $cg) {
+				$queryParams['cardgames'][] = $cg;
+			}
+		}
+
+		header("Location: /pedido/index?" . http_build_query($queryParams));
+		exit;
+
     }
-
-    header("Location: /pedido/index?" . http_build_query($queryParams, '', '&'));
-    exit;
-}
 
 
 

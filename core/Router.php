@@ -48,7 +48,7 @@ class Router
 		require_once __DIR__ . '/AuthLoja.php';
 
 		// Rotas públicas que não exigem login
-		$rotasPublicasApp = ['auth'];
+		$rotasPublicasApp = ['auth', 'inscricao'];
 		$rotasPublicasAdmin = ['auth'];
 
 		if ($isAdmin) {

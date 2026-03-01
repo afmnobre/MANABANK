@@ -236,6 +236,14 @@
   <p>⚠️ Não esqueça de colocar a Observação do Valor Variado!</p>
 </div>
 
+<?php
+$baseAssetUrl = '/public';
+foreach ($tipos_pagamento as $key => $tp) {
+    $tipos_pagamento[$key]['imagem_path'] =
+        "{$baseAssetUrl}/storage/uploads/tipos_pagamento/{$tp['id_pagamento']}/{$tp['imagem']}";
+}
+?>
+
 <!-- Modal Método de Pagamento -->
 <div class="modal fade" id="modalPagamento" tabindex="-1" aria-labelledby="modalPagamentoLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -268,8 +276,21 @@
             </thead>
             <tbody>
               <?php foreach ($tipos_pagamento as $tp): ?>
+              <?php
+                $baseAssetUrl = '/public';
+                $imagemPath = !empty($tp['imagem'])
+                    ? "{$baseAssetUrl}/storage/uploads/tipos_pagamento/{$tp['id_pagamento']}/{$tp['imagem']}"
+                    : null;
+              ?>
               <tr>
-                <td><?= htmlspecialchars($tp['nome']) ?></td>
+                <td>
+                  <?php if ($imagemPath): ?>
+                    <img src="<?= $imagemPath ?>" alt="<?= htmlspecialchars($tp['nome']) ?>" style="height:40px;">
+                  <?php else: ?>
+                    -
+                  <?php endif; ?>
+
+                <?= htmlspecialchars($tp['nome']) ?></td>
                 <td>
                   <input type="number" step="0.01" min="0"
                          class="form-control pagamento-valor"
@@ -298,6 +319,7 @@
     </div>
   </div>
 </div>
+
 
 
 <!-- Modal Recibo -->

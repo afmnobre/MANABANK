@@ -14,7 +14,7 @@
 
 <body class="bg-dark text-light d-flex flex-column min-vh-100">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-black shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-dark bg-black shadow-sm fixed-top">
     <div class="container-fluid">
 
         <a class="navbar-brand fw-bold" href="/admin/home">
@@ -109,5 +109,6 @@
     </div>
 </nav>
 
-<main class="flex-fill container-fluid mt-4">
+<!-- Ajuste o conteúdo principal para não ficar atrás do header fixo -->
+<main class="flex-fill container-fluid mt-5"> <!-- mt-5 adiciona espaço equivalente ao navbar fixo -->
 
