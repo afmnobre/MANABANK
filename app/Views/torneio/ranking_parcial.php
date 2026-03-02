@@ -1,64 +1,66 @@
 <?php
 $baseAssetUrl = 'http://tcgbalcao.local/public';
 ?>
-
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Classificação Parcial - <?= htmlspecialchars($dadosTorneio['nome_torneio']) ?></title>
-    <link rel="stylesheet" href="/css/style.css">
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; background-color: #fff; color: #000; }
-        .header { margin-bottom: 20px; padding-top: 20px; }
-        .header img { max-height: 80px; }
-        table { margin: 0 auto; border-collapse: collapse; width: 90%; }
-        th, td { border: 1px solid #000; padding: 10px; font-size: 14px; }
-        th { background-color: #f2f2f2; }
-        .rodada-titulo { font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Classificação Parcial - <?= htmlspecialchars($dadosTorneio['nome_torneio']) ?></title>
+  <!-- Bootstrap via CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome via CDN -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
-<body>
-<div class="header">
-    <?php if (!empty($loja['logo'])): ?>
-        <img src="<?= $baseAssetUrl ?>/storage/uploads/lojas/<?= $loja['id_loja'] ?>/<?= htmlspecialchars($loja['logo']) ?>" alt="Logo"><br>
-    <?php endif; ?>
-    <strong><?= htmlspecialchars($loja['nome_loja']) ?></strong>
-</div>
+<body class="bg-dark text-light">
 
-<div class="rodada-titulo">
-    <?= $numero_rodada_texto ?> - <?= htmlspecialchars($dadosTorneio['nome_torneio']) ?>
-</div>
-<p>Classificação atualizada após os resultados da rodada.</p>
+<div class="container-fluid py-4 text-center">
 
-<table>
-    <thead>
+  <!-- Logo da loja -->
+  <?php if (!empty($loja['logo'])): ?>
+    <img src="<?= $baseAssetUrl ?>/storage/uploads/lojas/<?= $loja['id_loja'] ?>/<?= htmlspecialchars($loja['logo']) ?>"
+         alt="Logo da Loja" class="mb-4" style="max-height:80px;">
+  <?php endif; ?>
+  <h3 class="mb-4">Classificação Parcial - <?= htmlspecialchars($dadosTorneio['nome_torneio']) ?></h3>
+
+  <p class="mb-4">Classificação atualizada após os resultados da rodada <strong><?= $numero_rodada_texto ?></strong>.</p>
+
+  <!-- Tabela de classificação -->
+  <?php if (!empty($classificacao)): ?>
+    <table class="table table-dark table-bordered w-auto mx-auto align-middle text-center">
+      <thead>
         <tr>
-            <th>Posição</th>
-            <th>Jogador</th>
-            <th>Vitórias</th>
-            <th>Derrotas</th>
-            <th>Empates</th>
-            <th>BYE</th>
-            <th>Pontos</th>
-            <th>Força dos Oponentes</th>
-            <th>Vitórias 2x0</th>
+          <th>Posição</th>
+          <th>Jogador</th>
+          <th>Vitórias</th>
+          <th>Derrotas</th>
+          <th>Empates</th>
+          <th>BYE</th>
+          <th>Pontos</th>
+          <th>Força dos Oponentes</th>
+          <th>Vitórias 2x0</th>
         </tr>
-    </thead>
-    <tbody>
+      </thead>
+      <tbody>
         <?php $pos = 1; foreach ($classificacao as $r): ?>
-            <tr>
-                <td><?= $pos++ ?>º</td>
-                <td><?= htmlspecialchars($r['nome']) ?></td>
-                <td><?= $r['vitorias'] ?></td>
-                <td><?= $r['derrotas'] ?></td>
-                <td><?= $r['empates'] ?></td>
-                <td><?= $r['bye'] ?></td>
-                <td><strong><?= $r['pontos'] ?></strong></td>
-                <td><?= $r['forca_oponentes'] ?></td>
-                <td><?= $r['vitorias_2x0'] ?></td>
-            </tr>
+          <tr>
+            <td><?= $pos++ ?>º</td>
+            <td><?= htmlspecialchars($r['nome']) ?></td>
+            <td><?= $r['vitorias'] ?></td>
+            <td><?= $r['derrotas'] ?></td>
+            <td><?= $r['empates'] ?></td>
+            <td><?= $r['bye'] ?></td>
+            <td><strong><?= $r['pontos'] ?></strong></td>
+            <td><?= $r['forca_oponentes'] ?></td>
+            <td><?= $r['vitorias_2x0'] ?></td>
+          </tr>
         <?php endforeach; ?>
-    </tbody>
-</table>
+      </tbody>
+    </table>
+  <?php else: ?>
+    <div class="alert alert-warning">Não foi possível calcular a classificação parcial.</div>
+  <?php endif; ?>
+</div>
+
 </body>
 </html>
+

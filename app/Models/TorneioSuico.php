@@ -274,4 +274,17 @@ class TorneioSuico extends Torneio
 		$stmt = $this->db->prepare($sql);
 		return $stmt->execute([$id_partida]);
 	}
+
+	public function listarPareamentos($id_torneio, $numero_rodada)
+	{
+		$sql = "SELECT jogador1, jogador2
+				FROM torneio_pareamentos
+				WHERE id_torneio = ? AND numero_rodada = ?
+				ORDER BY mesa ASC";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$id_torneio, $numero_rodada]);
+		return $stmt->fetchAll(PDO::FETCH_ASSOC);
+	}
+
+
 }

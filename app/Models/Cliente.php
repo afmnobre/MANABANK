@@ -188,6 +188,21 @@ class Cliente
 		return $stmt->fetch(PDO::FETCH_ASSOC);
 	}
 
+	public function vinculadoLoja($id_cliente, $id_loja)
+	{
+		$sql = "SELECT 1 FROM clientes_lojas WHERE id_cliente = ? AND id_loja = ? AND status = 'ativo'";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$id_cliente, $id_loja]);
+		return (bool)$stmt->fetch();
+	}
+
+	public function vinculadoCardgame($id_cliente, $id_cardgame)
+	{
+		$sql = "SELECT 1 FROM clientes_cardgames WHERE id_cliente = ? AND id_cardgame = ?";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$id_cliente, $id_cardgame]);
+		return (bool)$stmt->fetch();
+	}
 
 }
 

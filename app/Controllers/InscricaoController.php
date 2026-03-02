@@ -37,28 +37,54 @@ class InscricaoController extends Controller
 		$clienteModel = new Cliente();
 		$torneioModel = new Torneio();
 
-		$cliente = $clienteModel->buscarPorCelular($telefone);
+		$torneio = $torneioModel->buscarPublico($idTorneio);
 
 		header('Content-Type: application/json; charset=utf-8');
 
-		if ($cliente) {
-			$torneioModel->inscreverParticipante($idTorneio, $cliente['id_cliente']);
-
-			echo json_encode([
-				'status' => 'success',
-				'nome' => $cliente['nome'],
-				'id_cliente' => $cliente['id_cliente'],
-				'evento' => 'inscricaoConfirmada'
-			]);
-		} else {
+		if (!$torneio) {
 			echo json_encode([
 				'status' => 'error',
-				'message' => 'Celular não encontrado. Procure a organização.'
+				'message' => 'Torneio não encontrado.'
 			]);
+			exit;
 		}
+
+		$cliente = $clienteModel->buscarPorCelular($telefone);
+
+		if (!$cliente) {
+			echo json_encode([
+				'status' => 'error',
+				'message' => 'Você não está cadastrado, por favor solicitar seu cadastro no sistema.'
+			]);
+			exit;
+		}
+
+		if (!$clienteModel->vinculadoLoja($cliente['id_cliente'], $torneio['id_loja'])) {
+			echo json_encode([
+				'status' => 'error',
+				'message' => 'Você não está cadastrado nesta loja, solicitar cadastro no sistema.'
+			]);
+			exit;
+		}
+
+		if (!$clienteModel->vinculadoCardgame($cliente['id_cliente'], $torneio['id_cardgame'])) {
+			echo json_encode([
+				'status' => 'error',
+				'message' => 'Você não está vinculado a esse cardgame, solicitar vínculo no sistema.'
+			]);
+			exit;
+		}
+
+		// Se passou em todas as validações, inscreve
+		$torneioModel->inscreverParticipante($idTorneio, $cliente['id_cliente']);
+
+		echo json_encode([
+			'status' => 'success',
+			'nome' => $cliente['nome'],
+			'id_cliente' => $cliente['id_cliente'],
+			'evento' => 'inscricaoConfirmada'
+		]);
 		exit;
 	}
-
-
 }
 

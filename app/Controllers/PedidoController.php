@@ -8,297 +8,163 @@ require_once __DIR__ . '/../../core/AuthMiddleware.php';
 
 class PedidoController extends Controller
 {
+	public function index()
+	{
+		AuthMiddleware::verificarLogin();
+		$pedidoModel  = new Pedido();
+		$clienteModel = new Cliente();
+		$produtoModel = new Produto();
 
-    public function index()
-    {
-        AuthMiddleware::verificarLogin();
-        $pedidoModel  = new Pedido();
-        $clienteModel = new Cliente();
-        $produtoModel = new Produto();
+		$idLoja = $_SESSION['LOJA']['id_loja'];
+		$dataSelecionada = $_GET['data'] ?? date('Y-m-d');
 
-        $clientes = $clienteModel->listarPorLoja($_SESSION['LOJA']['id_loja']);
-        $produtos = $produtoModel->listarAtivosPorLoja($_SESSION['LOJA']['id_loja']);
-        $cardgames = $pedidoModel->listarCardgames();
-        $pedidos = $pedidoModel->listarPedidos();
-		$tipos_pagamento_raw = $pedidoModel->listarTiposPagamento();
+		// Carregamento de dados básicos
+		$clientes = $clienteModel->listarPorLoja($idLoja);
+		$produtos = $produtoModel->listarAtivosPorLoja($idLoja);
+		$cardgames = $pedidoModel->listarCardgames();
+		$tipos_pagamento = $pedidoModel->listarTiposPagamento();
 
-		// garantir que seja array
-		if (!is_array($tipos_pagamento_raw)) {
-			$tipos_pagamento_raw = [];
+		// Busca pedidos da data usando o novo método unificado
+		$pedidosBrutos = $pedidoModel->listarPorLojaDataTodos($idLoja, $dataSelecionada);
+
+		$pedidosPorCliente = [];
+		foreach ($pedidosBrutos as $p) {
+			$p['itens'] = $pedidoModel->listarItensPorPedido($p['id_pedido']);
+			$pedidosPorCliente[$p['id_cliente']] = $p;
 		}
 
-		// remover duplicados por id_pagamento
-		$tipos_pagamento_unicos = [];
-		foreach ($tipos_pagamento_raw as $tp) {
-			$id = (int)$tp['id_pagamento'];
-			if (!isset($tipos_pagamento_unicos[$id])) {
-				$tipos_pagamento_unicos[$id] = $tp;
+		// Listas para organização por status
+		$clientesAbertos = [];
+		$clientesPagos   = [];
+		$clientesSem     = [];
+
+		foreach ($clientes as $cliente) {
+			$idCli = $cliente['id_cliente'];
+
+			// Chamada ao Model corrigida para a tabela 'clientes_cardgames'
+			$cliente['cardgames'] = $pedidoModel->listarCardgamesPorCliente($idCli);
+
+			// Inicializa classe de status vazia
+			$cliente['classe_total'] = '';
+
+			if (isset($pedidosPorCliente[$idCli])) {
+				$p = $pedidosPorCliente[$idCli];
+
+				// Define a classe CSS baseada no status de pagamento
+				$cliente['classe_total'] = ($p['pedido_pago'] == 1) ? 'total-pago' : 'total-aberto';
+
+				// Separa nas listas de ordenação
+				if ($p['pedido_pago'] == 0) {
+					$clientesAbertos[] = $cliente;
+				} else {
+					$clientesPagos[] = $cliente;
+				}
+			} else {
+				// Cliente sem pedido na data selecionada
+				$clientesSem[] = $cliente;
 			}
 		}
 
-		// reindexar e ordenar pelo nome
-        $tipos_pagamento = array_values($tipos_pagamento_unicos);
+		// Ordenação alfabética para cada grupo
+		$ordenarNome = fn($a, $b) => strcmp($a['nome'], $b['nome']);
+		usort($clientesAbertos, $ordenarNome);
+		usort($clientesPagos, $ordenarNome);
+		usort($clientesSem, $ordenarNome);
 
-		usort($tipos_pagamento, fn($a, $b) => strcmp($a['nome'], $b['nome']));
+		// Retorno para a View com clientes unidos na ordem de prioridade (Abertos > Pagos > Sem Pedido)
+		$this->view('pedido/index', [
+			'clientes'          => array_merge($clientesAbertos, $clientesPagos, $clientesSem),
+			'produtos'          => $produtos,
+			'pedidosPorCliente' => $pedidosPorCliente,
+			'dataSelecionada'   => $dataSelecionada,
+			'datasPendentes'    => $pedidoModel->listarDatasPendentes($idLoja), // Mantido conforme código original
+			'cardgames'         => $cardgames,
+			'tipos_pagamento'   => $tipos_pagamento
+		]);
+	}
 
+    public function salvar() {
+        AuthMiddleware::verificarLogin();
+        $pedidoModel = new Pedido();
+        $dados = $_POST;
+        $idLoja = $_SESSION['LOJA']['id_loja'];
+        $data = $dados['dataSelecionada'] ?? date('Y-m-d');
 
-        $hoje = date('Y-m-d');
-        $dataSelecionada = $_GET['data'] ?? $hoje;
+        foreach ($dados['itens'] as $idCliente => $itens) {
+            $variado = (float)str_replace(',', '.', $dados['variado'][$idCliente] ?? 0);
+            $temItens = array_sum($itens) > 0;
 
-        $pedidos = $pedidoModel->listarPorLojaDataTodos($_SESSION['LOJA']['id_loja'], $dataSelecionada);
-
-        // 🔹 Remove pedidos zerados (sem itens, valor 0 e não pago)
-        foreach ($pedidos as $key => $p) {
-            $itens = $pedidoModel->listarItensPorPedido($p['id_pedido']);
-            $valorVariado = (float)($p['valor_variado'] ?? 0);
-
-            $temItens = false;
-            foreach ($itens as $item) {
-                if ((int)$item['quantidade'] > 0) {
-                    $temItens = true;
-                    break;
+            if ($temItens || $variado > 0) {
+                $pedidoModel->salvar([
+                    'id_cliente'         => $idCliente,
+                    'id_loja'            => $idLoja,
+                    'valor_variado'      => $variado,
+                    'observacao_variado' => $dados['observacao_variado'][$idCliente] ?? null,
+                    'pedido_pago'        => isset($dados['pago'][$idCliente]) ? 1 : 0,
+                    'itens'              => $itens,
+                    'data_pedido'        => $data
+                ]);
+            } elseif (isset($dados['id_pedido'][$idCliente])) {
+                // Se o pedido existe mas foi zerado, removemos se for Gerente
+                if ($_SESSION['USUARIO']['perfil'] === 'GERENTE') {
+                    $pedidoModel->excluir($dados['id_pedido'][$idCliente]);
                 }
             }
-
-            if (!$temItens && $valorVariado == 0 && $p['pedido_pago'] == 0) {
-                $pedidoModel->excluir($p['id_pedido']);
-                unset($pedidos[$key]);
-            } else {
-                $p['itens'] = $itens;
-                $pedidos[$key] = $p;
-            }
         }
 
-        $pedidosPorCliente = [];
-        foreach ($pedidos as $p) {
-            $pedidosPorCliente[$p['id_cliente']][] = $p;
+        $this->redirecionarComFiltros($data, $dados['cardgames'] ?? []);
+    }
+
+    public function salvarPagamento() {
+        AuthMiddleware::verificarLogin();
+        $pedidoModel = new Pedido();
+        $dados = $_POST;
+        $idCliente = (int)$dados['id_cliente'];
+
+        // Normalização de valores
+        $variado = (float)str_replace(['.', ','], ['', '.'], $dados['variado'][$idCliente] ?? 0);
+
+        $payload = [
+            'id_cliente'         => $idCliente,
+            'id_loja'            => $_SESSION['LOJA']['id_loja'],
+            'valor_variado'      => $variado,
+            'observacao_variado' => trim($dados['observacao_variado'][$idCliente] ?? ''),
+            'pedido_pago'        => 1,
+            'data_pedido'        => $dados['dataSelecionada'] ?? date('Y-m-d'),
+            'itens'              => $dados['itens'][$idCliente] ?? []
+        ];
+
+        // O model->salvar já resolve se é INSERT ou UPDATE
+        $idPedido = $pedidoModel->salvar($payload);
+
+        // Salva os métodos de rateio
+        if (!empty($dados['valor'])) {
+            $pedidoModel->salvarTiposPagamento($idPedido, $dados['valor']);
         }
 
-        $mapaPrecos = [];
-        foreach ($produtos as $prod) {
-            $mapaPrecos[$prod['id_produto']] = (float)$prod['valor_venda'];
-        }
-
-        foreach ($clientes as &$cliente) {
-            $cliente['cardgames'] = $pedidoModel->listarCardgamesPorCliente($cliente['id_cliente']);
-            $id = $cliente['id_cliente'];
-            $classeTotal = '';
-
-            if (isset($pedidosPorCliente[$id])) {
-                $pedido = reset($pedidosPorCliente[$id]);
-                $valorTotal = (float)($pedido['valor_variado'] ?? 0);
-
-                if (!empty($pedido['itens'])) {
-                    foreach ($pedido['itens'] as $item) {
-                        $idProd = $item['id_produto'];
-                        $preco  = $mapaPrecos[$idProd] ?? 0;
-                        $valorTotal += ($item['quantidade'] * $preco);
-                    }
-                }
-
-                if ($valorTotal > 0) {
-                    $classeTotal = ($pedido['pedido_pago'] == 1) ? 'total-pago' : 'total-aberto';
-                }
-            }
-
-            $cliente['classe_total'] = $classeTotal;
-        }
-        unset($cliente);
-
-        $clientesAbertos = [];
-        $clientesPagos   = [];
-        $clientesSem     = [];
-
-        foreach ($clientes as $cliente) {
-            $id = $cliente['id_cliente'];
-            if (isset($pedidosPorCliente[$id])) {
-                $pedido = reset($pedidosPorCliente[$id]);
-                if ($pedido['pedido_pago'] == 0) {
-                    $clientesAbertos[] = $cliente;
-                } else {
-                    $clientesPagos[] = $cliente;
-                }
-            } else {
-                $clientesSem[] = $cliente;
-            }
-        }
-
-        usort($clientesAbertos, fn($a, $b) => strcmp($a['nome'], $b['nome']));
-        usort($clientesPagos, fn($a, $b) => strcmp($a['nome'], $b['nome']));
-        usort($clientesSem, fn($a, $b) => strcmp($a['nome'], $b['nome']));
-
-        $clientesOrdenados = array_merge($clientesAbertos, $clientesPagos, $clientesSem);
-
-        $this->view('pedido/index', [
-            'clientes'          => $clientesOrdenados,
-            'produtos'          => $produtos,
-            'pedidosPorCliente' => $pedidosPorCliente,
-            'dataSelecionada'   => $dataSelecionada,
-            'datasPendentes'    => $pedidoModel->listarDatasPendentes($_SESSION['LOJA']['id_loja']),
-            'cardgames'         => $cardgames,
-            'tipos_pagamento'   => $tipos_pagamento
-        ]);
+        $this->redirecionarComFiltros($payload['data_pedido'], $dados['cardgamesSelecionados'] ?? []);
     }
 
     public function recibo($id)
     {
         AuthMiddleware::verificarLogin();
         $pedidoModel = new Pedido();
-        $pedido = $pedidoModel->buscarPorIdRecibo($id);
-        $itens  = $pedidoModel->listarItensPorRecibo($id);
+        $pedido = $pedidoModel->buscarPorId($id); // Usando o método unificado
+        $itens  = $pedidoModel->listarItensPorPedido($id);
 
-        if (!$pedido) {
-            die('Pedido não encontrado');
-        }
-
-        $loja = Loja::buscarPorId($_SESSION['LOJA']['id_loja']);
+        if (!$pedido) die('Pedido não encontrado');
 
         $this->rawView('pedido/recibo', [
             'pedido' => $pedido,
             'itens'  => $itens,
-            'loja'   => $loja
+            'loja'   => Loja::buscarPorId($_SESSION['LOJA']['id_loja'])
         ]);
     }
 
-    public function salvar() {
-        AuthMiddleware::verificarLogin();
-        $pedidoModel = new Pedido();
-        $dados = $_POST;
-        $dataSelecionada = $dados['dataSelecionada'] ?? date('Y-m-d');
-
-        foreach ($dados['itens'] as $idCliente => $produtos) {
-            $idPedido = $dados['id_pedido'][$idCliente] ?? null;
-
-            // 🔹 Normaliza valor variado
-            $variado = $dados['variado'][$idCliente] ?? 0;
-            $variado = str_replace(',', '.', $variado);
-            if ($variado === '' || $variado === null) {
-                $variado = 0;
-            }
-            $variado = (float)$variado;
-
-            $pago = isset($dados['pago'][$idCliente]) ? 1 : 0;
-            $observacaoVariado = $dados['observacao_variado'][$idCliente] ?? null;
-
-            $temValores = false;
-            foreach ($produtos as $qtd) {
-                if ($qtd > 0) { $temValores = true; break; }
-            }
-            if ($variado > 0) $temValores = true;
-
-            if ($idPedido) {
-                if ($temValores) {
-                    $pedidoModel->atualizar($idPedido, [
-                        'valor_variado'      => $variado,
-                        'observacao_variado' => $observacaoVariado,
-                        'pedido_pago'        => $pago
-                    ]);
-                    $pedidoModel->atualizarItens($idPedido, $produtos);
-                } else {
-                    $pedidoModel->zerarPedido($idPedido);
-                    if ($_SESSION['USUARIO']['perfil'] === 'GERENTE') {
-                        $pedidoModel->excluir($idPedido);
-                    }
-                }
-            } else {
-                if ($temValores) {
-                    $pedidoModel->salvar([
-                        'id_cliente'        => $idCliente,
-                        'id_loja'           => $_SESSION['LOJA']['id_loja'],
-                        'valor_variado'     => $variado,
-                        'observacao_variado'=> $observacaoVariado,
-                        'pedido_pago'       => $pago,
-                        'itens'             => $produtos,
-                        'data_pedido'       => $dataSelecionada
-                    ]);
-                }
-            }
-        }
-        $queryParams = ['data' => $dataSelecionada];
-
-        if (!empty($dados['cardgames'])) {
-            $queryParams['cardgames'] = $dados['cardgames'];
-        }
-        header("Location: /pedido/index?" . http_build_query($queryParams, '', '&'));
+    private function redirecionarComFiltros($data, $cardgames) {
+        $params = ['data' => $data];
+        if (!empty($cardgames)) $params['cardgames'] = $cardgames;
+        header("Location: /pedido/index?" . http_build_query($params));
         exit;
-}
-
-public function salvarPagamento() {
-    AuthMiddleware::verificarLogin();
-
-    $pedidoModel = new Pedido();
-    $dados = $_POST;
-
-    $idCliente = (int)($dados['id_cliente'] ?? 0);
-    $idPedido  = $dados['id_pedido'] ?? null;
-
-    // 🔑 Correção: pegar os valores rateados do modal
-    $pagamentosSelecionados = $dados['valor'] ?? [];
-
-    // Normaliza valor variado
-    $variado = $dados['variado'][$idCliente] ?? 0;
-    $variado = str_replace('.', '', $variado);
-    $variado = str_replace(',', '.', $variado);
-    if ($variado === '' || $variado === null) {
-        $variado = 0;
     }
-    $variado = (float)$variado;
-
-    // Observação
-    $observacaoVariado = trim($dados['observacao_variado'][$idCliente] ?? '');
-
-    if ($idPedido) {
-        // Atualiza pedido existente
-        $pedidoModel->atualizar($idPedido, [
-            'valor_variado'      => $variado,
-            'observacao_variado' => $observacaoVariado,
-            'pedido_pago'        => 1
-        ]);
-
-        if (!empty($dados['itens'][$idCliente])) {
-            $pedidoModel->atualizarItens($idPedido, $dados['itens'][$idCliente]);
-        }
-
-        if (!empty($pagamentosSelecionados)) {
-            $pedidoModel->salvarTiposPagamento($idPedido, $pagamentosSelecionados);
-        }
-    } else {
-        // 🔹 Cria novo pedido já como pago
-        $novoId = $pedidoModel->salvar([
-            'id_cliente'         => $idCliente,
-            'id_loja'            => $_SESSION['LOJA']['id_loja'],
-            'valor_variado'      => $variado,
-            'observacao_variado' => $observacaoVariado,
-            'pedido_pago'        => 1,
-            'data_pedido'        => $dados['dataSelecionada'] ?? date('Y-m-d')
-        ]);
-
-        // 🔹 Grava itens vinculados ao novo pedido
-        if (!empty($dados['itens'][$idCliente])) {
-            $pedidoModel->atualizarItens($novoId, $dados['itens'][$idCliente]);
-        }
-
-        // 🔹 Grava métodos de pagamento com valor
-        if (!empty($pagamentosSelecionados)) {
-            $pedidoModel->salvarTiposPagamento($novoId, $pagamentosSelecionados);
-        }
-    }
-
-            // Redireciona de volta para a tela de pedidos mantendo filtros
-		$queryParams = ['data' => $dados['dataSelecionada']];
-
-		if (!empty($dados['cardgamesSelecionados'])) {
-			foreach ($dados['cardgamesSelecionados'] as $cg) {
-				$queryParams['cardgames'][] = $cg;
-			}
-		}
-
-		header("Location: /pedido/index?" . http_build_query($queryParams));
-		exit;
-
-    }
-
-
-
-
 }

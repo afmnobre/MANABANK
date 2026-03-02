@@ -1,100 +1,80 @@
+<?php
+$baseAssetUrl = 'http://tcgbalcao.local/public';
+?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Regras de Pontuação - Sistema Suíço</title>
-    <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; text-align: center; padding: 40px; background-color: #fff; color: #000; }
-
-        .header { margin-bottom: 20px; }
-        .header img { max-height: 80px; margin-bottom: 5px; }
-        .nome-loja { font-size: 1.2em; font-weight: bold; text-transform: uppercase; }
-
-        .titulo-principal {
-            margin: 30px 0;
-            font-size: 1.8em;
-            font-weight: bold;
-            border-top: 3px solid #000;
-            border-bottom: 3px solid #000;
-            padding: 15px 0;
-            display: flex;
-            /* Garante que a bandeira e o texto fiquem alinhados */
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        /* Define o tamanho fixo da bandeira para não quebrar o layout */
-        .img-bandeira {
-            height: 30px;
-            width: auto;
-            border: 1px solid #eee; /* Uma borda fina para destacar caso o fundo seja branco */
-        }
-
-        .secao { margin-bottom: 40px; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto; }
-        h2 { border-left: 8px solid #d52b1e; padding-left: 15px; background: #f8f8f8; padding-top: 8px; padding-bottom: 8px; font-size: 1.4em; }
-
-        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-        th, td { border: 1px solid #000; padding: 10px; text-align: left; }
-
-        .criterios-lista { padding-left: 20px; line-height: 1.8; }
-
-        .no-print { margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px; }
-        .btn { padding: 12px 25px; cursor: pointer; border: 2px solid #000; background: #fff; font-weight: bold; font-size: 14px; text-transform: uppercase; }
-        .btn-print { background: #000; color: #fff; margin-right: 10px; }
-
-        @media print {
-            .no-print { display: none; }
-            body { padding: 0; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Regras de Pontuação - Sistema Suíço</title>
+  <!-- Bootstrap via CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome via CDN -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
-<body>
+<body class="bg-dark text-light">
 
-<div class="header">
-    <?php if (!empty($loja['logo'])): ?>
-        <img src="/storage/uploads/lojas/<?= $loja['id_loja'] ?>/<?= htmlspecialchars($loja['logo']) ?>" alt="Logo"><br>
-    <?php endif; ?>
-    <span class="nome-loja"><?= htmlspecialchars($loja['nome_loja']) ?></span>
-</div>
+<div class="container py-4 text-center">
 
-<div class="titulo-principal">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Flag_of_Switzerland.svg/512px-Flag_of_Switzerland.svg.png" class="img-bandeira" alt="Bandeira Suíça">
-    <span>TORNEIO SUÍÇO</span>
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Flag_of_Switzerland.svg/512px-Flag_of_Switzerland.svg.png" class="img-bandeira" alt="Bandeira Suíça">
-</div>
+  <!-- Logo da loja -->
+  <?php if (!empty($loja['logo'])): ?>
+    <img src="<?= $baseAssetUrl ?>/storage/uploads/lojas/<?= $loja['id_loja'] ?>/<?= htmlspecialchars($loja['logo']) ?>"
+         alt="Logo da Loja" class="mb-4" style="max-height:80px;">
+  <?php endif; ?>
+  <h2 class="mb-4">Regras de Pontuação - Sistema Suíço</h2>
 
-<div class="secao">
-    <h2>Regras Melhor de 3 (MD3)</h2>
-    <table>
+  <!-- Título com bandeiras -->
+  <div class="d-flex justify-content-center align-items-center mb-4">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f3/Flag_of_Switzerland.svg"
+         class="me-3" style="height:30px;" alt="Bandeira Suíça">
+    <span class="fw-bold">TORNEIO SUÍÇO</span>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f3/Flag_of_Switzerland.svg"
+         class="ms-3" style="height:30px;" alt="Bandeira Suíça">
+  </div>
+
+  <!-- Regras MD3 -->
+  <div class="card bg-secondary text-light mb-4 mx-auto" style="max-width:600px;">
+    <div class="card-header fw-bold">Regras Melhor de 3 (MD3)</div>
+    <div class="card-body text-start">
+      <table class="table table-dark table-bordered mb-3">
         <tr><td>Vitória / BYE</td><td><strong>3 Pontos</strong></td></tr>
         <tr><td>Empate</td><td><strong>1 Ponto</strong></td></tr>
         <tr><td>Derrota</td><td><strong>0 Pontos</strong></td></tr>
-    </table>
-    <strong>Critérios de Desempate:</strong>
-    <ul class="criterios-lista">
+      </table>
+      <strong>Critérios de Desempate:</strong>
+      <ul class="mt-2">
         <li><strong>1º Força do oponente (Buchholz):</strong> Soma da pontuação de todos os adversários enfrentados.</li>
         <li><strong>2º Performance de Sets:</strong> Jogadores que venceram por 2x0 têm vantagem sobre vitórias por 2x1.</li>
-    </ul>
-</div>
+      </ul>
+    </div>
+  </div>
 
-<div class="secao">
-    <h2>Regras Melhor de 1 (MD1)</h2>
-    <table>
+  <!-- Regras MD1 -->
+  <div class="card bg-secondary text-light mb-4 mx-auto" style="max-width:600px;">
+    <div class="card-header fw-bold">Regras Melhor de 1 (MD1)</div>
+    <div class="card-body text-start">
+      <table class="table table-dark table-bordered mb-3">
         <tr><td>Vitória / BYE</td><td><strong>3 Pontos</strong></td></tr>
         <tr><td>Empate</td><td><strong>1 Ponto</strong></td></tr>
         <tr><td>Derrota</td><td><strong>0 Pontos</strong></td></tr>
-    </table>
-    <strong>Critérios de Desempate:</strong>
-    <ul class="criterios-lista">
+      </table>
+      <strong>Critérios de Desempate:</strong>
+      <ul class="mt-2">
         <li><strong>1º Força do oponente (Buchholz):</strong> Soma da pontuação de todos os adversários enfrentados.</li>
-    </ul>
-</div>
+      </ul>
+    </div>
+  </div>
 
-<div class="no-print">
-    <button class="btn btn-print" onclick="window.print()">Imprimir Regras</button>
-    <button class="btn" onclick="window.close()">Fechar Janela</button>
+  <!-- Botões -->
+  <div class="mt-4">
+    <button class="btn btn-light me-2" onclick="window.print()">
+      <i class="fa-solid fa-print"></i> Imprimir Regras
+    </button>
+    <button class="btn btn-danger" onclick="window.close()">
+      <i class="fa-solid fa-xmark"></i> Fechar Janela
+    </button>
+  </div>
 </div>
 
 </body>
 </html>
+

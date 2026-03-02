@@ -168,29 +168,31 @@ class Torneio
 		$stmt->execute([$id_torneio, $id_cliente]);
 	}
 
-    public function buscarPublico($id_torneio)
-    {
-    $sql = "SELECT t.*, c.nome AS cardgame
-            FROM torneios t
-            LEFT JOIN cardgames c ON t.id_cardgame = c.id_cardgame
-            WHERE t.id_torneio = ?";
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute([$id_torneio]);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
+	public function buscarPublico($id_torneio)
+	{
+		$sql = "SELECT
+					t.id_torneio,
+					t.nome_torneio,
+					t.id_loja,
+					t.id_cardgame,
+					t.data_criacao,
+					c.nome AS cardgame
+				FROM torneios t
+				LEFT JOIN cardgames c ON t.id_cardgame = c.id_cardgame
+				WHERE t.id_torneio = ?";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$id_torneio]);
+		return $stmt->fetch(PDO::FETCH_ASSOC);
+	}
 
-public function listarParticipantesConfirmados($idTorneio)
-{
-    $sql = "SELECT c.id_cliente, c.nome
-            FROM torneio_participantes tp
-            JOIN clientes c ON c.id_cliente = tp.id_cliente
-            WHERE tp.id_torneio = ?";
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute([$idTorneio]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
-
-
-
+	public function listarParticipantesConfirmados($idTorneio)
+	{
+		$sql = "SELECT c.id_cliente, c.nome
+				FROM torneio_participantes tp
+				JOIN clientes c ON c.id_cliente = tp.id_cliente
+				WHERE tp.id_torneio = ?";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$idTorneio]);
+		return $stmt->fetchAll(PDO::FETCH_ASSOC);
+	}
 }

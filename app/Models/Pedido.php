@@ -12,49 +12,42 @@ class Pedido
         $this->db = Database::getInstance();
     }
 
-    public function listarPorLojaData($id_loja, $dataSelecionada)
-    {
-        $sql = "SELECT * FROM pedidos
-                WHERE id_loja = :id_loja
-                  AND data_pedido = :data_pedido
-                  AND pedido_pago = 1
-                ORDER BY id_pedido ASC";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            'id_loja' => $id_loja,
-            'data_pedido' => $dataSelecionada
-        ]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+	/**
+	 * MÉTODO UNIFICADO (Substitui listarPorLojaDataTodos, listarPendentes, etc.)
+	 */
+	public function listarPorLojaData($idLoja, $data, $apenasPagos = null)
+	{
+		$sql = "SELECT * FROM pedidos WHERE id_loja = :id_loja AND data_pedido = :data";
 
-    public function listarPorLojaDataTodos($id_loja, $dataSelecionada)
-    {
-        $sql = "SELECT * FROM pedidos
-                WHERE id_loja = :id_loja
-                  AND data_pedido = :data_pedido
-                ORDER BY id_pedido ASC";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            'id_loja' => $id_loja,
-            'data_pedido' => $dataSelecionada
-        ]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+		// Se passar true ou false, ele filtra. Se não passar nada, traz todos.
+		if ($apenasPagos !== null) {
+			$sql .= " AND pedido_pago = " . ($apenasPagos ? 1 : 0);
+		}
 
-    public function listarPorLojaDataPagos($id_loja, $dataSelecionada)
-    {
-        $sql = "SELECT * FROM pedidos
-                WHERE id_loja = :id_loja
-                  AND data_pedido = :data_pedido
-                  AND pedido_pago = 1
-                ORDER BY id_pedido ASC";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            'id_loja' => $id_loja,
-            'data_pedido' => $dataSelecionada
-        ]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+		$stmt = $this->db->prepare($sql);
+		$stmt->bindValue(':id_loja', $idLoja, PDO::PARAM_INT);
+		$stmt->bindValue(':data', $data);
+		$stmt->execute();
+		return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+	}
+
+	/**
+	 * Busca todos os pedidos de uma loja em uma data específica.
+	 * Este método é exigido pelo PedidoController:index() na linha 28.
+	 */
+	public function listarPorLojaDataTodos($idLoja, $data)
+	{
+		$sql = "SELECT * FROM pedidos
+				WHERE id_loja = :id_loja
+				AND data_pedido = :data";
+
+		$stmt = $this->db->prepare($sql);
+		$stmt->bindValue(':id_loja', $idLoja, PDO::PARAM_INT);
+		$stmt->bindValue(':data', $data);
+		$stmt->execute();
+
+		return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+	}
 
     public function listarDatasPendentes($id_loja)
     {
@@ -69,6 +62,9 @@ class Pedido
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
+    /**
+     * REUTILIZÁVEL: O método salvar agora decide se insere ou atualiza
+     */
     public function salvar($dados)
     {
         $stmtCheck = $this->db->prepare("
@@ -83,25 +79,10 @@ class Pedido
             'id_loja'    => $dados['id_loja'],
             'data_pedido'=> $dados['data_pedido']
         ]);
-        $id_pedido_existente = $stmtCheck->fetchColumn();
+        $id_pedido = $stmtCheck->fetchColumn();
 
-        if ($id_pedido_existente) {
-            $stmt = $this->db->prepare("
-                UPDATE pedidos SET
-                    valor_variado = :valor_variado,
-                    observacao_variado = :observacao_variado,
-                    pedido_pago   = :pedido_pago
-                WHERE id_pedido = :id_pedido
-            ");
-            $stmt->execute([
-                'valor_variado'      => $dados['valor_variado'],
-                'observacao_variado' => $dados['observacao_variado'] ?? null,
-                'pedido_pago'        => $dados['pedido_pago'],
-                'id_pedido'          => $id_pedido_existente
-            ]);
-
-            $this->atualizarItens($id_pedido_existente, $dados['itens']);
-            return $id_pedido_existente;
+        if ($id_pedido) {
+            $this->atualizar($id_pedido, $dados);
         } else {
             $stmt = $this->db->prepare("
                 INSERT INTO pedidos (id_cliente, id_loja, valor_variado, observacao_variado, pedido_pago, data_pedido)
@@ -115,142 +96,14 @@ class Pedido
                 'pedido_pago'       => $dados['pedido_pago'],
                 'data_pedido'       => $dados['data_pedido']
             ]);
-
             $id_pedido = $this->db->lastInsertId();
+        }
+
+        if (isset($dados['itens'])) {
             $this->atualizarItens($id_pedido, $dados['itens']);
-            return $id_pedido;
         }
-    }
 
-public function atualizarItens($id_pedido, $itens) {
-    // antes de deletar, recuperar itens antigos para devolver estoque
-    $stmtOld = $this->db->prepare("SELECT id_produto, quantidade FROM pedidos_itens WHERE id_pedido = :id_pedido");
-    $stmtOld->execute(['id_pedido' => $id_pedido]);
-    $itensAntigos = $stmtOld->fetchAll(PDO::FETCH_ASSOC);
-
-    $produtoModel = new Produto();
-    foreach ($itensAntigos as $itemAntigo) {
-        if ($itemAntigo['quantidade'] > 0) {
-            $produtoModel->atualizarEstoque($itemAntigo['id_produto'], $itemAntigo['quantidade']); // devolve estoque
-        }
-    }
-
-    // limpa itens
-    $stmtDel = $this->db->prepare("DELETE FROM pedidos_itens WHERE id_pedido = :id_pedido");
-    $stmtDel->execute(['id_pedido' => $id_pedido]);
-
-    // insere novos itens e retira do estoque
-    foreach ($itens as $id_produto => $quantidade) {
-        if ($quantidade > 0) {
-            $stmtProd = $this->db->prepare("SELECT valor_venda FROM produtos WHERE id_produto = :id_produto");
-            $stmtProd->execute(['id_produto' => $id_produto]);
-            $valor_unitario = $stmtProd->fetchColumn();
-
-            $stmtItem = $this->db->prepare("
-                INSERT INTO pedidos_itens (id_pedido, id_produto, quantidade, valor_unitario)
-                VALUES (:id_pedido, :id_produto, :quantidade, :valor_unitario)
-            ");
-            $stmtItem->execute([
-                'id_pedido'      => $id_pedido,
-                'id_produto'     => $id_produto,
-                'quantidade'     => $quantidade,
-                'valor_unitario' => $valor_unitario
-            ]);
-
-            $produtoModel->atualizarEstoque($id_produto, -$quantidade); // retira estoque
-        }
-    }
-}
-
-
-    public function zerarPedido($id_pedido)
-    {
-        $stmt = $this->db->prepare("
-            UPDATE pedidos SET
-                valor_variado = 0,
-                observacao_variado = NULL,
-                pedido_pago = 0
-            WHERE id_pedido = :id_pedido
-        ");
-        $stmt->execute(['id_pedido' => $id_pedido]);
-
-        $stmtItens = $this->db->prepare("
-            UPDATE pedidos_itens SET quantidade = 0
-            WHERE id_pedido = :id_pedido
-        ");
-        $stmtItens->execute(['id_pedido' => $id_pedido]);
-    }
-
-public function excluir($id_pedido)
-{
-    // devolve estoque antes de excluir
-    $stmtItens = $this->db->prepare("SELECT id_produto, quantidade FROM pedidos_itens WHERE id_pedido = :id_pedido");
-    $stmtItens->execute(['id_pedido' => $id_pedido]);
-    $itens = $stmtItens->fetchAll(PDO::FETCH_ASSOC);
-
-    $produtoModel = new Produto();
-    foreach ($itens as $item) {
-        if ($item['quantidade'] > 0) {
-            $produtoModel->atualizarEstoque($item['id_produto'], $item['quantidade']); // devolve estoque
-        }
-    }
-
-    // exclui itens
-    $stmtDelItens = $this->db->prepare("DELETE FROM pedidos_itens WHERE id_pedido = :id_pedido");
-    $stmtDelItens->execute(['id_pedido' => $id_pedido]);
-
-    // exclui pagamentos vinculados
-    $stmtDelPagamentos = $this->db->prepare("DELETE FROM pedido_pagamento WHERE id_pedido = :id_pedido");
-    $stmtDelPagamentos->execute(['id_pedido' => $id_pedido]);
-
-    // exclui pedido
-    $stmtPedido = $this->db->prepare("DELETE FROM pedidos WHERE id_pedido = :id_pedido");
-    $stmtPedido->execute(['id_pedido' => $id_pedido]);
-}
-
-
-
-    public function buscarPorIdRecibo($id_pedido)
-    {
-        $sql = "SELECT
-                    p.id_pedido,
-                    p.data_pedido,
-                    p.valor_variado,
-                    p.observacao_variado,
-                    p.pedido_pago,
-                    c.nome
-                FROM pedidos p
-                JOIN clientes c ON c.id_cliente = p.id_cliente
-                WHERE p.id_pedido = :id_pedido";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute(['id_pedido' => $id_pedido]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    public function listarItensPorRecibo($id_pedido)
-    {
-        $sql = "SELECT
-                    pr.nome,
-                    pi.quantidade,
-                    pi.valor_unitario
-                FROM pedidos_itens pi
-                JOIN produtos pr ON pr.id_produto = pi.id_produto
-                WHERE pi.id_pedido = :id_pedido
-                  AND pi.quantidade > 0";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute(['id_pedido' => $id_pedido]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function listarItensPorPedido($id_pedido)
-    {
-        $sql = "SELECT pi.id_item, pi.id_produto, pi.quantidade, pi.valor_unitario, pr.nome
-                FROM pedidos_itens pi
-                JOIN produtos pr ON pr.id_produto = pi.id_produto
-                WHERE pi.id_pedido = :id_pedido";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute(['id_pedido' => $id_pedido]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $id_pedido;
     }
 
     public function atualizar($id_pedido, $dados)
@@ -269,69 +122,127 @@ public function excluir($id_pedido)
             'pedido_pago'        => (int)($dados['pedido_pago'] ?? 0),
             'id_pedido'          => (int)$id_pedido
         ]);
+    }
 
+    public function atualizarItens($id_pedido, $itens)
+    {
+        $produtoModel = new Produto();
+
+        // 1. Devolve estoque dos itens antigos antes de limpar
+        $stmtOld = $this->db->prepare("SELECT id_produto, quantidade FROM pedidos_itens WHERE id_pedido = :id_pedido");
+        $stmtOld->execute(['id_pedido' => $id_pedido]);
+        $itensAntigos = $stmtOld->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($itensAntigos as $item) {
+            if ($item['quantidade'] > 0) {
+                $produtoModel->atualizarEstoque($item['id_produto'], $item['quantidade']);
+            }
+        }
+
+        // 2. Limpa itens atuais
+        $this->db->prepare("DELETE FROM pedidos_itens WHERE id_pedido = :id_pedido")->execute(['id_pedido' => $id_pedido]);
+
+        // 3. Insere novos e retira estoque
+        foreach ($itens as $id_produto => $quantidade) {
+            if ($quantidade > 0) {
+                // Busca preço atual
+                $stmtProd = $this->db->prepare("SELECT valor_venda FROM produtos WHERE id_produto = :id_produto");
+                $stmtProd->execute(['id_produto' => $id_produto]);
+                $valor_unitario = $stmtProd->fetchColumn();
+
+                $stmtItem = $this->db->prepare("
+                    INSERT INTO pedidos_itens (id_pedido, id_produto, quantidade, valor_unitario)
+                    VALUES (:id_pedido, :id_produto, :quantidade, :valor_unitario)
+                ");
+                $stmtItem->execute([
+                    'id_pedido'      => $id_pedido,
+                    'id_produto'     => $id_produto,
+                    'quantidade'     => $quantidade,
+                    'valor_unitario' => $valor_unitario
+                ]);
+
+                $produtoModel->atualizarEstoque($id_produto, -$quantidade);
+            }
+        }
+    }
+
+    public function excluir($id_pedido)
+    {
+        // Reaproveita a lógica de zerar itens para devolver estoque
+        $this->atualizarItens($id_pedido, []);
+
+        $this->db->prepare("DELETE FROM pedido_pagamento WHERE id_pedido = :id")->execute(['id' => $id_pedido]);
+        $this->db->prepare("DELETE FROM pedidos WHERE id_pedido = :id")->execute(['id' => $id_pedido]);
     }
 
     /**
-     * Lista todos os cardgames cadastrados
+     * UNIFICADO: Busca dados do pedido e cliente
      */
-    public function listarCardgames()
+    public function buscarPorId($id_pedido)
     {
-        $sql = "SELECT id_cardgame, nome, imagem_fundo_card, imagem_card_game
-                FROM cardgames
-                ORDER BY nome ASC";
-        $stmt = $this->db->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Lista os cardgames vinculados a um cliente
-     */
-    public function listarCardgamesPorCliente($id_cliente)
-    {
-        $sql = "SELECT cg.id_cardgame
-                FROM clientes_cardgames cc
-                JOIN cardgames cg ON cg.id_cardgame = cc.id_cardgame
-                WHERE cc.id_cliente = :id_cliente";
+        $sql = "SELECT p.*, c.nome as cliente_nome
+                FROM pedidos p
+                JOIN clientes c ON c.id_cliente = p.id_cliente
+                WHERE p.id_pedido = :id_pedido";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute(['id_cliente' => $id_cliente]);
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $stmt->execute(['id_pedido' => $id_pedido]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-     public function listarTiposPagamento() {
-     $sql = "SELECT * FROM tipos_pagamento ORDER BY nome ASC";
-     $stmt = $this->db->query($sql);
-     return $stmt->fetchAll(PDO::FETCH_ASSOC);
-     }
+	/**
+	 * Busca os itens de um pedido.
+	 * Também exigido pelo novo fluxo do Controller.
+	 */
+	public function listarItensPorPedido($idPedido)
+	{
+		$sql = "SELECT pi.*, p.nome, p.emoji
+				FROM pedidos_itens pi
+				JOIN produtos p ON pi.id_produto = p.id_produto
+				WHERE pi.id_pedido = :id_pedido";
 
-    // Buscar todos os pedidos
-    public function listarPedidos() {
-        $sql = "SELECT * FROM pedidos ORDER BY id_pedido DESC";
-        $stmt = $this->db->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+		$stmt = $this->db->prepare($sql);
+		$stmt->bindValue(':id_pedido', $idPedido, PDO::PARAM_INT);
+		$stmt->execute();
 
-	public function salvarTiposPagamento($idPedido, $pagamentos) {
-		// Apaga pagamentos antigos
-		$stmtDelete = $this->db->prepare("DELETE FROM pedido_pagamento WHERE id_pedido = :id_pedido");
-		$stmtDelete->execute(['id_pedido' => $idPedido]);
-
-		// Insere novos com valor
-		$sqlInsert = "INSERT INTO pedido_pagamento (id_pedido, id_pagamento, valor)
-					  VALUES (:id_pedido, :id_pagamento, :valor)";
-		$stmtInsert = $this->db->prepare($sqlInsert);
-
-		foreach ($pagamentos as $idPagamento => $valor) {
-			$valor = floatval(str_replace(',', '.', $valor));
-			if ($valor > 0) {
-				$stmtInsert->execute([
-					'id_pedido'   => $idPedido,
-					'id_pagamento'=> $idPagamento,
-					'valor'       => $valor
-				]);
-			}
-		}
+		return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 	}
 
-}
+	public function salvarTiposPagamento($idPedido, $pagamentos)
+	{
+		// Limpa pagamentos anteriores para evitar erro de PRIMARY KEY (id_pedido, id_pagamento)
+		$this->db->prepare("DELETE FROM pedido_pagamento WHERE id_pedido = ?")->execute([$idPedido]);
 
+		$sql = "INSERT INTO pedido_pagamento (id_pedido, id_pagamento, valor) VALUES (?, ?, ?)";
+		$stmt = $this->db->prepare($sql);
+
+		foreach ($pagamentos as $idPagamento => $valor) {
+			$valorNum = (float)str_replace(['.', ','], ['', '.'], $valor);
+			if ($valorNum > 0) {
+				$stmt->execute([$idPedido, $idPagamento, $valorNum]);
+			}
+		}
+    }
+
+	public function listarCardgamesPorCliente($idCliente)
+	{
+		// Corrigido para clientes_cardgames conforme seu CREATE TABLE
+		$sql = "SELECT id_cardgame FROM clientes_cardgames WHERE id_cliente = :id_cliente";
+		$stmt = $this->db->prepare($sql);
+		$stmt->bindValue(':id_cliente', $idCliente, PDO::PARAM_INT);
+		$stmt->execute();
+
+		return $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+	}
+
+    public function listarCardgames() {
+        return $this->db->query("SELECT * FROM cardgames ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+	public function listarTiposPagamento()
+	{
+		// Sincronizado com a sua tabela tipos_pagamento
+		$sql = "SELECT id_pagamento, nome, imagem FROM tipos_pagamento ORDER BY nome ASC";
+		$stmt = $this->db->query($sql);
+		return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+}
