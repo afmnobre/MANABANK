@@ -10,8 +10,9 @@ try {
     $stmt = $db->query("SELECT 1");
     $stmt->fetch();
 
-    echo "✅ CONEXÃO COM BANCO OK!!!";
+    echo "✅ CONEXÃO COM BANCO OK!";
 } catch (Exception $e) {
     echo "❌ ERRO: " . $e->getMessage();
 }
+
 
