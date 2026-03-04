@@ -41,3 +41,43 @@ input, select, textarea {
   border: 1px solid #444 !important;
 }
 
+.nav-link, .navbar-brand {
+    color: #fff !important;
+}
+
+.badge-perfil {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background-color: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* Utilitários para Componentes (Emoji Picker) */
+#picker-container {
+    position: absolute;
+    z-index: 10000;
+}
+
+/* Reset de box-sizing para evitar que o padding aumente o tamanho do elemento */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* Ajuste Global do Conteúdo */
+.main-content.container-fluid {
+    display: block;
+    width: 100%;
+    overflow-x: hidden; /* Impede o vazamento lateral */
+    padding-top: 10px !important;    /* Espaço superior desejado */
+    padding-left: 15px !important;   /* Espaço lateral esquerdo */
+    padding-right: 15px !important;  /* Espaço lateral direito */
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Correção para evitar que as Rows do Bootstrap criem barra de rolagem lateral */
+.main-content .row {
+    margin-left: 0;
+    margin-right: 0;
+}

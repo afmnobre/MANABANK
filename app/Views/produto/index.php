@@ -2,11 +2,11 @@
   <h2 class="text-light">Produtos da Loja</h2>
   <div>
       <span class="badge bg-secondary me-2">Dica: Arraste as linhas para reordenar</span>
-      <a href="/produto/criar" class="btn btn-primary btn-sm">➕ Novo Produto</a>
+      <a href="<?= $base ?>produto/criar" class="btn btn-primary btn-sm">➕ Novo Produto</a>
   </div>
 </div>
 
-<form id="formOrdem" method="POST" action="/produto/salvarOrdem">
+<form id="formOrdem" method="POST" action="<?= $base ?>produto/salvarOrdem">
     <div class="table-responsive">
         <table class="table table-dark table-striped table-hover align-middle">
             <thead>
@@ -32,7 +32,7 @@
                         }
                     ?>
                     <tr data-id="<?= $produto['id_produto'] ?>">
-                        <td class="text-center text-muted" style="width: 30px;">
+                        <td class="text-center text-muted" style="width: 30px; cursor: move;">
                             <i class="bi bi-grip-vertical">☰</i>
                         </td>
                         <td>
@@ -52,7 +52,7 @@
                             <?php endif; ?>
                         </td>
 
-                        <td class="<?= $alertaEstoque ? 'estoque-critico' : '' ?>">
+                        <td class="<?= $alertaEstoque ? 'estoque-critico text-danger fw-bold' : '' ?>">
                             <?= $produto['estoque_atual'] ?>
                         </td>
 
@@ -60,12 +60,12 @@
                             <span class="badge bg-dark border show-ordem"><?= $produto['ordem_exibicao'] ?></span>
                         </td>
                         <td>
-                            <a class="btn btn-sm btn-warning" href="/produto/editar/<?= $produto['id_produto'] ?>" title="Editar">✏️ Editar</a>
+                            <a class="btn btn-sm btn-warning" href="<?= $base ?>produto/editar/<?= $produto['id_produto'] ?>" title="Editar">✏️ Editar</a>
 
                             <?php if ($produto['ativo'] == 1): ?>
-                                <a class="btn btn-sm btn-danger" href="/produto/desativar/<?= $produto['id_produto'] ?>" title="Desativar">🚫 Desativar</a>
+                                <a class="btn btn-sm btn-danger" href="<?= $base ?>produto/desativar/<?= $produto['id_produto'] ?>" title="Desativar">🚫 Desativar</a>
                             <?php else: ?>
-                                <a class="btn btn-sm btn-success" href="/produto/ativar/<?= $produto['id_produto'] ?>" title="Ativar">✅ Ativar</a>
+                                <a class="btn btn-sm btn-success" href="<?= $base ?>produto/ativar/<?= $produto['id_produto'] ?>" title="Ativar">✅ Ativar</a>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -75,5 +75,3 @@
     </div>
     <button class="btn btn-success mt-3" type="submit">💾 Salvar Nova Ordem</button>
 </form>
-
-

@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../../core/Database.php';
-
 use Core\Database;
 
 class Cliente
@@ -129,9 +127,6 @@ class Cliente
 
 	public function excluir($id, $id_loja)
 	{
-		// Removemos APENAS o vínculo com a loja atual.
-		// O cadastro na tabela 'clientes' permanece intocado para preservar
-		// o histórico em pedidos e torneios.
 		$stmt = $this->db->prepare("
 			DELETE FROM clientes_lojas
 			WHERE id_cliente = :id AND id_loja = :id_loja

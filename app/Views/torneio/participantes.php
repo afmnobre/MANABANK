@@ -15,14 +15,12 @@
 
 <div class="mb-3">
   <button class="btn btn-warning"
-          onclick="window.open('/torneio/inscricaoQRCode/<?= $torneio['id_torneio'] ?>',
+          onclick="window.open('<?= $base ?>torneio/inscricaoQRCode/<?= $torneio['id_torneio'] ?>',
                                'InscricaoQRCode',
                                'width=400,height=450,menubar=no,toolbar=no,location=no,status=no');">
     📱 Abrir inscrição via QR Code
   </button>
 </div>
-
-
 
 <div class="mb-3">
     <div class="input-group">
@@ -32,14 +30,12 @@
     </div>
 </div>
 
-<form action="/torneio/salvarParticipantes/<?= $torneio['id_torneio'] ?>" method="POST"
+<form action="<?= $base ?>torneio/salvarParticipantes/<?= $torneio['id_torneio'] ?>" method="POST"
       class="bg-dark text-light p-4 rounded border border-secondary">
     <div class="mb-3">
         <label class="form-label mb-3 text-light">Selecione os jogadores abaixo:</label>
 
-        <!-- Lista dinâmica atualizada via AJAX -->
         <div class="row" id="listaParticipantes">
-            <!-- Conteúdo inicial renderizado pelo PHP -->
             <?php foreach ($clientes as $cliente): ?>
                 <div class="col-md-6 mb-2 item-jogador" data-nome="<?= strtolower(htmlspecialchars($cliente['nome'])) ?>">
                     <label class="list-group-item bg-dark text-light border-secondary d-flex justify-content-between align-items-center py-3 px-3 rounded"
@@ -71,7 +67,7 @@
     <div class="mt-4">
         <input type="hidden" name="id_torneio" value="<?= $torneio['id_torneio'] ?>">
         <button type="submit" class="btn btn-primary">💾 Confirmar Participantes</button>
-        <a href="/torneio" class="btn btn-secondary">↩️ Voltar</a>
+        <a href="<?= $base ?>torneio" class="btn btn-secondary">↩️ Voltar</a>
     </div>
 </form>
 
@@ -80,19 +76,21 @@
 document.addEventListener('DOMContentLoaded', function() {
     const inputBusca = document.getElementById('buscaJogador');
     const contador = document.getElementById('contadorParticipantes');
+    // Definimos a base para o JavaScript
+    const BASE_URL = '<?= $base ?>';
 
-    // Atualiza contador
     function atualizarContador() {
         const totalSelecionados = document.querySelectorAll('input[name="participantes[]"]:checked').length;
         contador.innerText = `${totalSelecionados} Jogadores Selecionados`;
         if (totalSelecionados > 0) {
-            contador.classList.replace('bg-secondary', 'bg-primary');
+            contador.classList.add('bg-primary');
+            contador.classList.remove('bg-secondary');
         } else {
-            contador.classList.replace('bg-primary', 'bg-secondary');
+            contador.classList.add('bg-secondary');
+            contador.classList.remove('bg-primary');
         }
     }
 
-    // Filtro de busca
     function aplicarFiltro() {
         const termoBusca = inputBusca.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
         document.querySelectorAll('.item-jogador').forEach(item => {
@@ -101,10 +99,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Escuta digitação no campo de busca
     inputBusca.addEventListener('input', aplicarFiltro);
 
-    // Escuta cliques nos checkboxes
     document.addEventListener('change', function(e) {
         if (e.target.matches('input[name="participantes[]"]')) {
             atualizarContador();
@@ -113,30 +109,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     atualizarContador();
 
-    // Polling AJAX para atualizar lista
     function atualizarParticipantes() {
-        // Guardar selecionados
         const selecionados = [];
         document.querySelectorAll('input[name="participantes[]"]:checked').forEach(cb => {
             selecionados.push(cb.value);
         });
 
-        $.get('/torneio/listarAjax/<?= $torneio['id_torneio'] ?>', function(html){
+        // AJUSTADO: Utiliza BASE_URL para a chamada AJAX
+        $.get(BASE_URL + 'torneio/listarAjax/<?= $torneio['id_torneio'] ?>', function(html){
             $('#listaParticipantes').html(html);
 
-            // Reaplicar selecionados
             selecionados.forEach(id => {
                 const cb = document.querySelector(`input[name="participantes[]"][value="${id}"]`);
                 if (cb) cb.checked = true;
             });
 
             atualizarContador();
-            aplicarFiltro(); // reaplica filtro após atualizar lista
+            aplicarFiltro();
         });
     }
 
     setInterval(atualizarParticipantes, 5000);
 });
-
 </script>
-

@@ -1,10 +1,4 @@
 <?php
-require_once __DIR__ . '/../Models/Pedido.php';
-require_once __DIR__ . '/../Models/Cliente.php';
-require_once __DIR__ . '/../Models/Produto.php';
-require_once __DIR__ . '/../Models/Loja.php';
-require_once __DIR__ . '/../../core/Controller.php';
-require_once __DIR__ . '/../../core/AuthMiddleware.php';
 
 class PedidoController extends Controller
 {
@@ -112,7 +106,7 @@ class PedidoController extends Controller
             }
         }
 
-        $this->redirecionarComFiltros($data, $dados['cardgames'] ?? []);
+        $this->redirecionarComFiltros($data, $dados['cardgamesSelecionados'] ?? []);
     }
 
     public function salvarPagamento() {
@@ -161,10 +155,18 @@ class PedidoController extends Controller
         ]);
     }
 
-    private function redirecionarComFiltros($data, $cardgames) {
-        $params = ['data' => $data];
-        if (!empty($cardgames)) $params['cardgames'] = $cardgames;
-        header("Location: /pedido/index?" . http_build_query($params));
-        exit;
-    }
+	private function redirecionarComFiltros($data, $cardgames) {
+		$params = ['data' => $data];
+		if (!empty($cardgames)) {
+			$params['cardgames'] = $cardgames;
+		}
+
+		// Usamos a baseUrl do Controller para garantir o caminho correto (Local ou Remoto)
+		// rtrim remove a barra final para evitarmos barras duplas //
+		$urlBase = rtrim($this->baseUrl, '/');
+
+		// Montamos o link: baseUrl + / + rota + parâmetros
+		header("Location: " . $urlBase . "/pedido/index?" . http_build_query($params));
+		exit;
+	}
 }

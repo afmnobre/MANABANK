@@ -44,7 +44,7 @@ if (!empty($partidas)) {
         </div>
 
         <?php if ((int)$pendentes === 0): ?>
-            <form action="/TorneioEliminacao/avancarRodada" method="POST">
+            <form action="<?= $base ?>TorneioEliminacao/avancarRodada" method="POST">
                 <input type="hidden" name="id_torneio" value="<?= $id_torneio ?>">
                 <input type="hidden" name="rodada_atual" value="<?= $numRodadaAtiva ?>">
                 <input type="hidden" name="tipo_chave" value="<?= $tipoChaveAtiva ?>">
@@ -68,7 +68,7 @@ if (!empty($partidas)) {
             <div class="bracket-column">
                 <div class="bracket-title">Rodada <?= $i ?></div>
                 <?php if(isset($estrutura[$i]['WB'])) foreach ($estrutura[$i]['WB'] as $p) {
-                    echo renderChallongeGame($p, $id_torneio);
+                    echo renderChallongeGame($p, $id_torneio, $base); // Passando $base para a função
                 } ?>
             </div>
         <?php endforeach; ?>
@@ -80,7 +80,7 @@ if (!empty($partidas)) {
             <div class="bracket-column">
                 <div class="bracket-title text-warning fw-bold">GRANDE FINAL</div>
                 <?php foreach ($estrutura[$rodadaFinalKey]['GF'] as $p) {
-                    echo renderChallongeGame($p, $id_torneio);
+                    echo renderChallongeGame($p, $id_torneio, $base); // Passando $base para a função
                 } ?>
             </div>
         <?php endif; ?>
@@ -101,7 +101,7 @@ if (!empty($partidas)) {
             <div class="bracket-column">
                 <div class="bracket-title">Rodada L<?= $i ?></div>
                 <?php if(isset($estrutura[$i]['LB'])) foreach ($estrutura[$i]['LB'] as $p) {
-                    echo renderChallongeGame($p, $id_torneio);
+                    echo renderChallongeGame($p, $id_torneio, $base); // Passando $base para a função
                 } ?>
             </div>
         <?php endforeach; ?>
@@ -110,9 +110,10 @@ if (!empty($partidas)) {
 
 <?php
 /**
- * Função renderizadora de cada partida com CORREÇÃO DE BOTÕES
+ * Função renderizadora de cada partida
+ * AJUSTADO: Agora recebe o parâmetro $base para as rotas
  */
-function renderChallongeGame($p, $idT) {
+function renderChallongeGame($p, $idT, $base) {
     $resultado = $p['resultado'] ?? '';
     $vencida = !empty($resultado);
     $statusRodada = $p['status'] ?? '';
@@ -145,10 +146,9 @@ function renderChallongeGame($p, $idT) {
         </div>
 
         <?php
-        // CORREÇÃO AQUI: Exibe botões individuais para permitir avançar jogadores sozinhos (ex: Felipe Santos na L4)
         if ($abertaParaEdicao && !$vencida): ?>
             <div class="p-1 bg-dark border-top border-secondary text-center">
-                <form action="/TorneioEliminacao/salvarResultado" method="POST" class="d-flex gap-1">
+                <form action="<?= $base ?>TorneioEliminacao/salvarResultado" method="POST" class="d-flex gap-1">
                     <input type="hidden" name="id_partida" value="<?= $p['id_partida'] ?>">
                     <input type="hidden" name="id_torneio" value="<?= $idT ?>">
 

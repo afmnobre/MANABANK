@@ -16,7 +16,12 @@ class Database
 
             $config = require __DIR__ . '/../config/config.php';
 
-            $dsn = "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4";
+            // Adicionamos a porta dinamicamente no DSN
+            $host = $config['db_host'];
+            $port = $config['db_port'] ?? '3306'; // Usa 3306 se não houver porta no config
+            $dbname = $config['db_name'];
+
+            $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
 
             try {
                 self::$instance = new PDO(
@@ -30,6 +35,7 @@ class Database
                     ]
                 );
             } catch (PDOException $e) {
+                // Em produção, seria ideal logar o erro em vez de dar die() com detalhes
                 die("Erro ao conectar no banco: " . $e->getMessage());
             }
         }

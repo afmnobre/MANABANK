@@ -5,9 +5,10 @@ spl_autoload_register(function ($class) {
     $baseDir = __DIR__ . '/../';
 
     $paths = [
-        $baseDir . 'admin/Models/',
-        $baseDir . 'admin/Controllers/',
+        $baseDir . 'app/Models/',    // Prioridade para o App
+        $baseDir . 'admin/Models/',  // Depois olha no Admin
         $baseDir . 'app/Controllers/',
+        $baseDir . 'admin/Controllers/',
         $baseDir . 'core/'
     ];
 

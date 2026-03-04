@@ -1,9 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../../core/Controller.php';
-require_once __DIR__ . '/../../core/AuthMiddleware.php';
-require_once __DIR__ . '/../Models/Cliente.php';
-
 class ClienteController extends Controller
 {
     public function index()
@@ -83,7 +79,8 @@ class ClienteController extends Controller
             $_SESSION['flash'] = "Cliente já existia, apenas vinculado à loja.";
         }
 
-        header('Location: /cliente');
+        // CORREÇÃO: Redirecionamento dinâmico
+        header('Location: ' . $this->baseUrl . 'cliente');
         exit;
     }
 
@@ -107,52 +104,54 @@ class ClienteController extends Controller
         $clienteModel->atualizar($id, $dadosCliente, $cardgames);
 
         $_SESSION['flash'] = "Cliente atualizado com sucesso!";
-        header('Location: /cliente');
+
+        // CORREÇÃO: Redirecionamento dinâmico
+        header('Location: ' . $this->baseUrl . 'cliente');
         exit;
     }
 
-	public function verificarTelefone()
-	{
-		header('Content-Type: application/json; charset=utf-8');
+    public function verificarTelefone()
+    {
+        header('Content-Type: application/json; charset=utf-8');
 
-		$telefone = preg_replace('/\D/', '', $_GET['telefone'] ?? '');
+        $telefone = preg_replace('/\D/', '', $_GET['telefone'] ?? '');
 
-		if (empty($telefone)) {
-			echo json_encode(["encontrado" => false]);
-			return;
-		}
+        if (empty($telefone)) {
+            echo json_encode(["encontrado" => false]);
+            return;
+        }
 
-		// Caminho correto para o model
-		require_once __DIR__ . "/../Models/Cliente.php";
-		$clienteModel = new Cliente();
+        // Caminho correto para o model
+        require_once __DIR__ . "/../Models/Cliente.php";
+        $clienteModel = new Cliente();
 
-		$cliente = $clienteModel->buscarPorTelefone($telefone);
+        $cliente = $clienteModel->buscarPorTelefone($telefone);
 
-		if ($cliente) {
-			echo json_encode([
-				"encontrado" => true,
-				"nome" => $cliente['nome'],
-				"email" => $cliente['email'],
-				"telefone" => $cliente['telefone']
-			]);
-		} else {
-			echo json_encode(["encontrado" => false]);
-		}
-	}
+        if ($cliente) {
+            echo json_encode([
+                "encontrado" => true,
+                "nome" => $cliente['nome'],
+                "email" => $cliente['email'],
+                "telefone" => $cliente['telefone']
+            ]);
+        } else {
+            echo json_encode(["encontrado" => false]);
+        }
+    }
 
-	public function excluir($id)
-	{
-		AuthMiddleware::verificarLogin();
+    public function excluir($id)
+    {
+        AuthMiddleware::verificarLogin();
 
-		$id_loja = $_SESSION['LOJA']['id_loja'];
-		$clienteModel = new Cliente();
+        $id_loja = $_SESSION['LOJA']['id_loja'];
+        $clienteModel = new Cliente();
 
-		if ($clienteModel->excluir($id, $id_loja)) {
-			$_SESSION['flash'] = "Vínculo com o cliente removido com sucesso! O histórico de pedidos foi preservado.";
-		}
+        if ($clienteModel->excluir($id, $id_loja)) {
+            $_SESSION['flash'] = "Vínculo com o cliente removido com sucesso! O histórico de pedidos foi preservado.";
+        }
 
-		header('Location: /cliente');
-		exit;
-	}
+        // CORREÇÃO: Redirecionamento dinâmico
+        header('Location: ' . $this->baseUrl . 'cliente');
+        exit;
+    }
 }
-

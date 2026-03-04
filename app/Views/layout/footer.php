@@ -1,19 +1,11 @@
-</div>
-<br><br>
-<?php
-$loja = $_SESSION['LOJA'] ?? [];
+</div> <br><br>
 
-$idLoja      = $loja['id_loja'] ?? 0;
-$faviconFile = $loja['favicon'] ?? 'favicon.ico';
-$faviconPath = "{$baseAssetUrl}/storage/uploads/lojas/{$idLoja}/{$faviconFile}";
-$corTema     = $loja['cor_tema'] ?? '#000'; // cor dinâmica em hexadecimal
-?>
-<footer class="text-light text-center py-1 fixed-bottom shadow-sm" style="background-color: <?= htmlspecialchars($corTema) ?>;">
+<footer class="text-light text-center py-1 fixed-bottom shadow-sm" style="background-color: <?= htmlspecialchars($corTema) ?>; border-top: 1px solid rgba(255,255,255,0.1);">
    <div class="container-fluid">
-      <div class="mb-2">
-         <img src="<?= htmlspecialchars($faviconPath) ?>" alt="Favicon da Loja" height="20">
+      <div class="mb-1">
+         <img src="<?= htmlspecialchars($faviconPath) ?>" alt="Favicon" height="20">
       </div>
-      <small>© <?= date('Y') ?> - <?= htmlspecialchars($loja['nome_loja'] ?? 'TCGBalcão') ?></small>
+      <small>© <?= date('Y') ?> - <?= htmlspecialchars($nomeLoja) ?></small>
    </div>
 </footer>
 
@@ -39,20 +31,19 @@ $corTema     = $loja['cor_tema'] ?? '#000'; // cor dinâmica em hexadecimal
 
 <!-- Chart.js (gráficos) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- Seus scripts locais -->
-<script src="/public/js/pedidos.js"></script>
-<script src="/public/js/cliente.js"></script>
-<script src="/public/js/produto.js"></script>
+<script src="<?= $base ?>public/js/pedidos.js"></script>
+<script src="<?= $base ?>public/js/cliente.js"></script>
+<script src="<?= $base ?>public/js/produto.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    initCalendario(
-        <?= isset($datasPendentes) ? json_encode($datasPendentes) : 'null' ?>,
-        "<?= isset($dataSelecionada) ? $dataSelecionada : '' ?>"
-    );
+    if (typeof initCalendario === 'function') {
+        initCalendario(
+            <?= isset($datasPendentes) ? json_encode($datasPendentes) : 'null' ?>,
+            "<?= isset($dataSelecionada) ? $dataSelecionada : '' ?>"
+        );
+    }
 });
 </script>
 </body>
 </html>
-

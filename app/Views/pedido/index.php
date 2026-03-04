@@ -25,7 +25,7 @@
                     <?php $checked = in_array((string)$cardgame['id_cardgame'], array_map('strval', ($_GET['cardgames'] ?? []))) ? 'checked' : ''; ?>
                     <label class="magic-card p-0 m-0 flex-shrink-0">
                         <input class="magic-check" type="checkbox" name="cardgames[]" value="<?= $cardgame['id_cardgame'] ?>" <?= $checked ?> onchange="filtrarClientes()">
-                        <img src="/public/storage/uploads/cardgames/<?= $cardgame['id_cardgame'] ?>/<?= htmlspecialchars($cardgame['imagem_fundo_card']) ?>" alt="<?= htmlspecialchars($cardgame['nome']) ?>" class="img-fluid">
+                        <img src="<?= $this->baseUrl ?>public/storage/uploads/cardgames/<?= $cardgame['id_cardgame'] ?>/<?= htmlspecialchars($cardgame['imagem_fundo_card']) ?>" alt="<?= htmlspecialchars($cardgame['nome']) ?>" class="img-fluid">
                         <div class="card-overlay"></div>
                     </label>
                 <?php endforeach; ?>
@@ -37,7 +37,7 @@
     </div>
 </div>
 
-<form id="formPedidos" method="POST" action="/pedido/salvar">
+<form id="formPedidos" method="POST" action="<?= $this->baseUrl ?>pedido/salvar">
     <input type="hidden" name="dataSelecionada" id="dataSelecionadaHidden" value="<?= $dataSelecionada ?>">
     <div id="cardgamesSelecionados"></div>
 
@@ -118,7 +118,6 @@
                                     $totalPedido += $item['quantidade'] * ($item['valor_unitario'] ?? 0);
                                 }
                             }
-                            $statusClass = $totalPedido > 0 ? ($isPago ? 'bg-success' : 'bg-danger') : '';
                         ?>
                         <td id="total_<?= $idCli ?>"
                             class="text-center fw-bold <?= ($totalPedido > 0) ? 'text-white' : '' ?>"
@@ -144,25 +143,6 @@
     </div>
 </form>
 
-<div class="modal fade" id="popupVariado" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered text-dark">
-        <div class="modal-content bg-dark text-light border-secondary">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title">Observação do Valor Variado</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="variado_cliente_id">
-                <textarea id="descricaoVariado" class="form-control bg-dark text-light border-secondary" rows="5" placeholder="Descreva o motivo do valor extra..."></textarea>
-            </div>
-            <div class="modal-footer border-secondary">
-                <button type="button" class="btn btn-primary w-100" onclick="salvarDescricaoVariado()">Confirmar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Método de Pagamento -->
 <div class="modal fade" id="modalPagamento" tabindex="-1" aria-labelledby="modalPagamentoLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content bg-dark text-light">
@@ -171,18 +151,16 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
       </div>
       <div class="modal-body">
-        <form id="formPagamento" method="POST" action="/pedido/salvarPagamento">
+        <form id="formPagamento" method="POST" action="<?= $this->baseUrl ?>pedido/salvarPagamento">
           <input type="hidden" id="modal_id_pedido" name="id_pedido" value="">
           <input type="hidden" id="modal_id_cliente" name="id_cliente" value="">
           <input type="hidden" name="dataSelecionada" value="<?= $dataSelecionada ?>">
 
-          <!-- Label com total do pedido -->
           <div class="mb-3">
-            <label class="fw-bold">Total do Pedido: R$ <span id="totalPedido"></span></label><br>
+            <label class="fw-bold">Total do Pedido: R$ <span id="totalPedidoLabel"></span></label><br>
             <label class="fw-bold">Valor restante a distribuir: R$ <span id="valorRestante"></span></label>
           </div>
 
-          <!-- Tabela 2x2 de tipos de pagamento -->
           <table class="table table-dark table-bordered align-middle">
             <thead>
               <tr>
@@ -195,9 +173,9 @@
             <tbody>
               <?php foreach ($tipos_pagamento as $tp): ?>
               <?php
-                $baseAssetUrl = '/public';
+                // AJUSTE: Caminho da imagem do tipo de pagamento corrigido
                 $imagemPath = !empty($tp['imagem'])
-                    ? "{$baseAssetUrl}/storage/uploads/tipos_pagamento/{$tp['id_pagamento']}/{$tp['imagem']}"
+                    ? "{$this->baseUrl}public/storage/uploads/tipos_pagamento/{$tp['id_pagamento']}/{$tp['imagem']}"
                     : null;
               ?>
               <tr>
@@ -207,22 +185,16 @@
                   <?php else: ?>
                     -
                   <?php endif; ?>
-
-                <?= htmlspecialchars($tp['nome']) ?></td>
-                <td>
-                  <input type="number" step="0.01" min="0"
-                         class="form-control pagamento-valor"
-                         name="valor[<?= $tp['id_pagamento'] ?>]"
-                         data-id="<?= $tp['id_pagamento'] ?>"
-                         value="0.00">
+                  <?= htmlspecialchars($tp['nome']) ?>
                 </td>
                 <td>
-                  <input type="checkbox" class="form-check-input pagamento-check"
-                         data-id="<?= $tp['id_pagamento'] ?>">
+                  <input type="number" step="0.01" min="0" class="form-control pagamento-valor" name="valor[<?= $tp['id_pagamento'] ?>]" data-id="<?= $tp['id_pagamento'] ?>" value="0.00">
                 </td>
                 <td>
-                  <button type="button" class="btn btn-sm btn-info distribuir-btn"
-                          data-id="<?= $tp['id_pagamento'] ?>">Distribuir restante</button>
+                  <input type="checkbox" class="form-check-input pagamento-check" data-id="<?= $tp['id_pagamento'] ?>">
+                </td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-info distribuir-btn" data-id="<?= $tp['id_pagamento'] ?>">Distribuir restante</button>
                 </td>
               </tr>
               <?php endforeach; ?>
@@ -237,7 +209,6 @@
     </div>
   </div>
 </div>
-
 
 <div class="modal fade" id="modalRecibo" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
@@ -281,3 +252,33 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="popupVariado" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered text-dark">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Observação do Valor Variado</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="variado_cliente_id">
+                <textarea id="descricaoVariado" class="form-control bg-dark text-light border-secondary" rows="5" placeholder="Descreva o motivo do valor extra..."></textarea>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-primary w-100" onclick="salvarDescricaoVariado()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Define a baseUrl para o arquivo JS externo (pedidos.js)
+    const BASE_URL = "<?= $this->baseUrl ?>";
+
+    // Exemplo de como a função abrirRecibo deve usar a constante
+    function abrirRecibo(idPedido) {
+        const url = BASE_URL + "pedido/gerarRecibo/" + idPedido;
+        document.getElementById('iframeRecibo').src = url;
+        new bootstrap.Modal(document.getElementById('modalRecibo')).show();
+    }
+</script>

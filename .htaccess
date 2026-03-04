@@ -1,13 +1,22 @@
+Options -Indexes
 RewriteEngine On
 
-# Se já estiver dentro de /public, não reescreve
-RewriteRule ^public/ - [L]
-
-# Se o arquivo ou diretório existir dentro de public, serve diretamente
+# ----------------------------------------------------------------------
+# PASSO 1: SE O ARQUIVO EXISTIR NO DISCO, ENTREGA ELE E PARA AQUI
+# ----------------------------------------------------------------------
+# Isso resolve o erro 404/PublicController das imagens e favicons
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^public/ - [L]
+RewriteRule ^ - [L]
 
-# Encaminha tudo para public/index.php
+# ----------------------------------------------------------------------
+# PASSO 2: REGRAS DE ROTEAMENTO (CASO NÃO SEJA ARQUIVO FÍSICO)
+# ----------------------------------------------------------------------
+
+# Se a URL começar com /admin, manda para o index da pasta admin
+RewriteCond %{REQUEST_URI} ^/admin [NC]
+RewriteRule ^admin/(.*)$ admin/public/index.php?url=$1 [QSA,L]
+
+# Caso contrário, manda para o roteador principal (app)
+RewriteCond %{REQUEST_URI} !^/public/
 RewriteRule ^(.*)$ public/index.php?url=$1 [QSA,L]
-

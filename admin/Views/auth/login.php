@@ -64,7 +64,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <form method="post" action="/admin/auth/autenticar">
+                    <form method="post" action="<?= $this->baseUrl ?>admin/auth/autenticar">
 
                         <div class="mb-3">
                             <label class="form-label text-light">Email</label>

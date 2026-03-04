@@ -1,62 +1,71 @@
 <?php
 
-require_once __DIR__ . '/../Models/Loja.php';
-require_once __DIR__ . '/../Models/Usuarios.php';
-
 class AuthController extends Controller
 {
+    // Este é o método que geralmente a rota "/" ou "/auth" chama
+    public function index() {
+        if (!empty($_SESSION['USUARIO'])) {
+            header("Location: " . $this->baseUrl . "home");
+            exit;
+        }
+        $this->rawView('auth/login', ['titulo' => 'Login']);
+    }
+
     public function login()
     {
-        // Se já está logado, não mostra o formulário
-        if (!empty($_SESSION['LOJA'])) {
-            header("Location: /home");
+        if (!empty($_SESSION['USUARIO'])) {
+            header("Location: " . $this->baseUrl . "home");
             exit;
         }
 
-        // Só mostra o formulário se não estiver logado
-        require_once __DIR__ . '/../../app/Views/auth/login.php';
+        $this->rawView('auth/login', ['titulo' => 'Login']);
     }
 
 	public function autenticar()
 	{
-		$email = $_POST['login'] ?? '';
+		$login = $_POST['login'] ?? '';
 		$senha = $_POST['senha'] ?? '';
 
-		$loja = Loja::buscarPorLogin($email);
+		// 1. Como temos Autoload, não precisamos de require.
+		// E como o método buscarPorLogin é STATIC no seu Model Loja,
+		// chamamos direto sem instanciar se preferir, ou usamos a classe Loja.
+		$usuario = Loja::buscarPorLogin($login);
 
-		if ($loja && password_verify($senha, $loja['senha'])) {
+		if ($usuario && password_verify($senha, $usuario['senha'])) {
+
+			// 2. Popula a sessão com os dados que o INNER JOIN do Model Loja já traz
 			$_SESSION['LOJA'] = [
-				'id_loja'    => $loja['id_loja'],
-				'nome_loja'  => $loja['nome_loja'],
-				'logo'       => $loja['logo'],
-				'cor_tema'   => $loja['cor_tema'],
-				'favicon'    => $loja['favicon'] ?? null
+				'id_loja'   => $usuario['id_loja'],
+				'nome_loja' => $usuario['nome_loja'] ?? 'Loja',
+				'logo'      => $usuario['logo'] ?? 'logo.png',
+				'favicon'   => $usuario['favicon'] ?? 'favicon.ico',
+				'cor_tema'  => $usuario['cor_tema'] ?? '#000',
 			];
 
-			// Certifique-se de que 'nome' existe no array $loja retornado do banco
 			$_SESSION['USUARIO'] = [
-				'id_usuario' => $loja['id_usuario'],
-				'nome'       => $loja['nome'] ?? 'Usuário sem nome',
-				'perfil'     => $loja['perfil'],
-				'email'      => $email
+				'id_usuario' => $usuario['id_usuario'],
+				'nome'       => $usuario['nome'],
+				'email'      => $usuario['email'],
+				'perfil'     => $usuario['perfil'] ?? 'atendente'
 			];
 
-			header("Location: /home");
+			// 3. Redirecionamento correto usando a baseUrl
+			header("Location: " . $this->baseUrl . "home");
 			exit;
 		}
 
-        $_SESSION['erro_login'] = "Login inválido";
-        header("Location: /login");
-    }
+		// Caso falhe:
+		$_SESSION['erro_login'] = "Credenciais inválidas.";
 
-    public function logout()
-    {
-        session_start();
-        unset($_SESSION['LOJA']);
-        unset($_SESSION['USUARIO']);
+		// Importante: Redirecionar para a rota de login correta usando baseUrl
+		header("Location: " . $this->baseUrl . "auth/index");
+		exit;
+	}
+
+    // Dentro do AuthController.php
+    public function logout() {
         session_destroy();
-        header("Location: /login");
+        header("Location: " . $this->baseUrl . "auth/index");
+        exit;
     }
 }
-
-

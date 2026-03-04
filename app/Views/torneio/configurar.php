@@ -2,7 +2,7 @@
     <?= isset($torneio) ? '✏️ Editar Torneio' : '🏆 Novo Torneio' ?>
 </h2>
 
-<form action="<?= isset($torneio) ? '/torneio/atualizar/'.$torneio['id_torneio'] : '/torneio/salvarConfiguracao' ?>"
+<form action="<?= isset($torneio) ? $base . 'torneio/atualizar/'.$torneio['id_torneio'] : $base . 'torneio/salvarConfiguracao' ?>"
       method="POST"
       class="bg-dark text-light p-4 rounded border border-secondary">
 
@@ -57,6 +57,6 @@
 
     <div class="mt-4">
         <button type="submit" class="btn btn-primary">💾 Salvar</button>
-        <a href="/torneio" class="btn btn-secondary">↩️ Voltar</a>
+        <a href="<?= $base ?>torneio" class="btn btn-secondary">↩️ Voltar</a>
     </div>
 </form>

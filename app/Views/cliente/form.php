@@ -2,7 +2,8 @@
     <?= isset($cliente) ? '✏️ Editar Cliente' : '➕ Novo Cliente' ?>
 </h2>
 
-<form method="POST" action="<?= isset($cliente) ? '/cliente/atualizar/'.$cliente['id_cliente'] : '/cliente/salvar' ?>"
+<form method="POST"
+      action="<?= $base ?><?= isset($cliente) ? 'cliente/atualizar/'.$cliente['id_cliente'] : 'cliente/salvar' ?>"
       class="bg-dark text-light p-4 rounded border border-secondary">
 
     <div class="row">
@@ -41,6 +42,9 @@
             <?php foreach ($cardgames as $cg): ?>
                 <?php
                 $checked = (!empty($cardgamesCliente) && in_array($cg['id_cardgame'], array_column($cardgamesCliente, 'id_cardgame'))) ? 'checked' : '';
+
+                // AJUSTE: Montagem da imagem usando o padrão que funcionou (public/storage)
+                $urlImgThumb = $base . "public/storage/uploads/cardgames/" . $cg['id_cardgame'] . "/" . $cg['imagem_fundo_card'];
                 ?>
 
                 <label class="magic-card">
@@ -50,7 +54,7 @@
                            value="<?= $cg['id_cardgame'] ?>"
                            <?= $checked ?>>
 
-                    <img src="<?= $baseAssetUrl ?>/storage/uploads/cardgames/<?= htmlspecialchars($cg['id_cardgame']) ?>/<?= htmlspecialchars($cg['imagem_fundo_card']) ?>"
+                    <img src="<?= $urlImgThumb ?>"
                          alt="<?= htmlspecialchars($cg['nome']) ?>">
 
                     <div class="card-overlay">
@@ -65,6 +69,6 @@
 
     <div class="mt-4">
         <button type="submit" class="btn btn-primary">💾 Salvar</button>
-        <a href="/cliente" class="btn btn-secondary">↩️ Voltar</a>
+        <a href="<?= $base ?>cliente" class="btn btn-secondary">↩️ Voltar</a>
     </div>
 </form>

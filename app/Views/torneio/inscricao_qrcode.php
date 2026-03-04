@@ -1,56 +1,60 @@
-<?php $baseAssetUrl = 'http://tcgbalcao.local/public'; ?>
+<?php
+// Correção para o servidor remoto: Sobe 3 níveis para encontrar a pasta /config na raiz
+require_once dirname(__DIR__, 3) . '/config/config.php';
+
+// Ajustamos o caminho dos assets baseado na raiz do sistema ($base)
+$baseAssetUrl = $base . 'public';
+
+// URL de inscrição que será convertida em QR Code
+// Exemplo: magic.4sql.net/MANABANK/torneio/inscrever/356
+// No arquivo app/Views/torneio/inscricao_qrcode.php
+$urlInscricao = "http://" . $_SERVER['HTTP_HOST'] . $base . "inscricao/index/" . $torneio['id_torneio'];
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>QR Code - <?= htmlspecialchars($torneio['nome_torneio'] ?? 'Torneio') ?></title>
-  <!-- Bootstrap via CDN -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- FontAwesome via CDN -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscrição - <?= htmlspecialchars($torneio['nome_torneio']) ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #121212; color: white; overflow: hidden; }
+        .qr-container { background: white; padding: 20px; border-radius: 15px; display: inline-block; }
+        .logo-loja { max-height: 80px; margin-bottom: 20px; }
+    </style>
 </head>
-<body class="bg-dark text-light">
+<body class="d-flex align-items-center justify-content-center vh-100">
 
-<div class="d-flex flex-column justify-content-center align-items-center vh-100 text-center">
+<div class="text-center">
+    <?php if (!empty($loja['logo'])): ?>
+        <img src="<?= $baseAssetUrl ?>/storage/uploads/lojas/<?= $loja['id_loja'] ?>/<?= htmlspecialchars($loja['logo']) ?>"
+             class="logo-loja" alt="Logo">
+    <?php endif; ?>
 
-  <!-- Logo da loja -->
-  <?php if (!empty($loja['logo'])): ?>
-    <img src="<?= $baseAssetUrl ?>/storage/uploads/lojas/<?= $loja['id_loja'] ?>/<?= htmlspecialchars($loja['logo']) ?>"
-         alt="Logo da Loja" class="mb-4" style="max-height:80px;">
-  <?php endif; ?>
+    <h2 class="fw-bold text-uppercase mb-1"><?= htmlspecialchars($torneio['nome_torneio']) ?></h2>
+    <p class="text-secondary mb-4">Aponte a câmera para se inscrever</p>
 
-  <!-- Tabela com dados do torneio -->
-  <table class="table table-dark table-bordered w-auto mb-4">
-    <tr>
-      <th>🏆 Torneio</th>
-      <td><?= htmlspecialchars($torneio['nome_torneio'] ?? 'N/A') ?></td>
-    </tr>
-    <tr>
-      <th>📅 Data</th>
-      <td><?= !empty($torneio['data_criacao']) ? date('d/m/Y H:i', strtotime($torneio['data_criacao'])) : 'N/A' ?></td>
-    </tr>
-    <tr>
-      <th>🎴 Cardgame</th>
-      <td><?= htmlspecialchars($torneio['cardgame'] ?? 'N/A') ?></td>
-    </tr>
-  </table>
+    <div class="qr-container shadow-lg mb-4">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=<?= urlencode($urlInscricao) ?>&ecc=M&margin=1"
+             alt="QR Code de Inscrição"
+            style="width: 300px; height: 300px;">
+    </div>
 
-  <!-- QR Code -->
-  <?php $link = "http://tcgbalcao.local/inscricao/index/{$torneio['id_torneio']}"; ?>
-  <div class="p-3 bg-light rounded text-center">
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=<?= urlencode($link) ?>"
-         alt="QR Code" class="img-fluid">
-    <p class="mt-3 text-dark"><strong>Ou acesse:</strong><br><?= $link ?></p>
-  </div>
+    <div class="mt-2">
+        <p class="mb-1 small text-secondary text-uppercase" style="letter-spacing: 2px;">Link Direto:</p>
+        <code class="text-info"><?= $urlInscricao ?></code>
+    </div>
 
-  <p class="mt-4">📱 Escaneie o QR Code ou digite o link acima para confirmar sua participação</p>
+    <div class="mt-5 d-print-none">
+        <button onclick="window.print()" class="btn btn-outline-light me-2">
+            <i class="fas fa-print"></i> Imprimir
+        </button>
+        <button onclick="window.close()" class="btn btn-danger">
+            <i class="fas fa-times"></i> Fechar
+        </button>
+    </div>
 </div>
 
-<!-- Bootstrap JS via CDN -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<!-- FontAwesome JS via CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
 </body>
 </html>
-
-
