@@ -1,22 +1,17 @@
-Options -Indexes
+Options -Indexes +FollowSymLinks
 RewriteEngine On
 
-# ----------------------------------------------------------------------
-# PASSO 1: SE O ARQUIVO EXISTIR NO DISCO, ENTREGA ELE E PARA AQUI
-# ----------------------------------------------------------------------
-# Isso resolve o erro 404/PublicController das imagens e favicons
+# 1. REGRAS DO ADMIN (Prioridade Total)
+# Se a URL começar com admin, ignore se a pasta existe e mande para o public/admin.php
+RewriteRule ^admin/?$ public/admin.php [QSA,L]
+RewriteRule ^admin/(.*)$ public/admin.php?url=$1 [QSA,L]
+
+# 2. IGNORAR ARQUIVOS FÍSICOS (Imagens, CSS, JS)
+# Se NÃO for algo que comece com admin, aí sim verificamos se o arquivo existe
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# ----------------------------------------------------------------------
-# PASSO 2: REGRAS DE ROTEAMENTO (CASO NÃO SEJA ARQUIVO FÍSICO)
-# ----------------------------------------------------------------------
-
-# Se a URL começar com /admin, manda para o index da pasta admin
-RewriteCond %{REQUEST_URI} ^/admin [NC]
-RewriteRule ^admin/(.*)$ admin/public/index.php?url=$1 [QSA,L]
-
-# Caso contrário, manda para o roteador principal (app)
+# 3. REGRAS DO APP (Loja)
 RewriteCond %{REQUEST_URI} !^/public/
 RewriteRule ^(.*)$ public/index.php?url=$1 [QSA,L]

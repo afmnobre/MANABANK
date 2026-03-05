@@ -1,21 +1,19 @@
 <?php
 
-use Core\Database;
-
 class Loja
 {
-	public static function buscarPorLogin($email)
-	{
-		$db = Database::getInstance();
-		// Adicionei u.nome abaixo
-		$sql = "SELECT l.*, u.id_usuario, u.nome, u.senha, u.perfil
-				FROM lojas l
-				INNER JOIN usuarios_loja u ON l.id_loja = u.id_loja
-				WHERE u.email = :email AND u.ativo = 1";
-		$stmt = $db->prepare($sql);
-		$stmt->execute(['email' => $email]);
-		return $stmt->fetch(PDO::FETCH_ASSOC);
-	}
+    public static function buscarPorLogin($email)
+    {
+        $db = Database::getInstance();
+
+        $sql = "SELECT l.*, u.id_usuario, u.nome, u.senha, u.perfil
+                FROM lojas l
+                INNER JOIN usuarios_loja u ON l.id_loja = u.id_loja
+                WHERE u.email = :email AND u.ativo = 1";
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['email' => $email]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 
     public static function buscarPorId($id_loja)
     {

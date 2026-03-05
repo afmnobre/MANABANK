@@ -1,68 +1,64 @@
 <?php
 
-// Nota: O Controller base já cuidou do autoload ou das inclusões necessárias
-// mas se precisar de models específicos que não estão no autoload:
-require_once __DIR__ . '/../Models/Admin.php';
-
 class AuthController extends Controller
 {
+    /**
+     * Ponto de entrada padrão: http://manabank.local/admin/
+     */
     public function index()
     {
-        $this->login();
+        // Se já está logado, vai direto para a Home
+        if (!empty($_SESSION['ADMIN'])) {
+            header("Location: " . $this->baseUrl . "admin/home");
+            exit;
+        }
+
+        // Login SEMPRE usa rawView para não carregar menu/footer
+        return $this->rawView('auth/login');
     }
 
+    /**
+     * Caso o sistema redirecione explicitamente para /admin/auth/login
+     */
     public function login()
     {
-        // Se já está logado no ADMIN, redireciona para a home do ADMIN
-        if (!empty($_SESSION['ADMIN_LOGADO'])) {
-            header("Location: " . $this->baseUrl . "admin/home");
-            exit;
-        }
-
-        // Usa o método view da classe pai (Controller)
-        // Isso vai buscar em: admin/Views/auth/login.php
-        $this->view('auth/login');
+        // Apenas chama o index para garantir que use o rawView
+        return $this->index();
     }
 
-    public function autenticar()
-    {
-        $email = $_POST['login'] ?? '';
-        $senha = $_POST['senha'] ?? '';
+	public function autenticar()
+	{
+		$email = $_POST['login'] ?? '';
+		$senha = $_POST['senha'] ?? '';
 
-        // IMPORTANTE: Para o Admin, você deve buscar no Model de Admin ou Usuário do Admin
-        // Vou assumir que você tem um Model Admin ou usa o Loja para isso
-        $loja = Loja::buscarPorLogin($email);
+		// Como o seu Model não é estático (usa $this->db), precisamos instanciá-lo
+		$adminModel = new Admin();
+		$admin = $adminModel->buscarPorEmail($email);
 
-        if ($loja && password_verify($senha, $loja['senha'])) {
-            // Chaves de sessão exclusivas para o ADMIN para não conflitar com a LOJA
-            $_SESSION['ADMIN_LOGADO'] = true;
-            $_SESSION['ADMIN_ID']     = $loja['id_usuario'];
-            $_SESSION['ADMIN_NOME']   = $loja['nome'] ?? 'Administrador';
+		// No fetch() sem parâmetros, o PHP costuma trazer índices numéricos e strings.
+		// É seguro usar password_verify aqui.
+		if ($admin && password_verify($senha, $admin['senha'])) {
 
-            // Se precisar dos dados da loja no admin também:
-            $_SESSION['LOJA'] = [
-                'id_loja'    => $loja['id_loja'],
-                'nome_loja'  => $loja['nome_loja'],
-            ];
+			// Gravando a sessão
+			$_SESSION['ADMIN'] = [
+				'id'     => $admin['id'] ?? $admin[0],
+				'nome'   => $admin['nome'] ?? 'Admin Master',
+				'perfil' => 'master'
+			];
 
-            // REDIRECIONAMENTO COM BASE_URL
-            header("Location: " . $this->baseUrl . "admin/home");
-            exit;
-        }
+			header("Location: " . $this->baseUrl . "admin/home");
+			exit;
+		}
 
-        $_SESSION['erro_login'] = "Login administrativo inválido";
-        header("Location: " . $this->baseUrl . "admin/auth/login");
-        exit;
-    }
+		$_SESSION['erro_login'] = "Credenciais administrativas inválidas.";
+		header("Location: " . $this->baseUrl . "admin");
+		exit;
+	}
 
     public function logout()
     {
-        // Não precisa de session_start() aqui se o seu index.php já iniciou
-        unset($_SESSION['ADMIN_LOGADO']);
-        unset($_SESSION['ADMIN_ID']);
-        unset($_SESSION['ADMIN_NOME']);
-
-        header("Location: " . $this->baseUrl . "admin/");
+        unset($_SESSION['ADMIN']);
+        header("Location: " . $this->baseUrl . "admin");
         exit;
     }
 }

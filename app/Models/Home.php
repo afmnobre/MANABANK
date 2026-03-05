@@ -1,7 +1,4 @@
 <?php
-require_once __DIR__ . '/../../core/Database.php';
-
-use Core\Database; // importa a classe com namespace
 
 class Home
 {
@@ -9,7 +6,7 @@ class Home
 
     public function __construct()
     {
-        // chama corretamente a classe com namespace
+        // O Autoload carregará a classe Database automaticamente da pasta core/
         $this->db = Database::getInstance();
     }
 
@@ -40,8 +37,8 @@ class Home
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-	public function contratoInfo($idLoja)
-	{
+    public function contratoInfo($idLoja)
+    {
 		$sql = "SELECT
 					L.numero_contrato AS numero,
 					DATEDIFF(C.data_fim, CURDATE()) AS dias_restantes
