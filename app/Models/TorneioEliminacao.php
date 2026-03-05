@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . '/Torneio.php';
 
 class TorneioEliminacao extends Torneio {
 

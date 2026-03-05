@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/Torneio.php';
-
 class TorneioSuico extends Torneio
 {
     public function listarParticipantesSuico($id_torneio)
