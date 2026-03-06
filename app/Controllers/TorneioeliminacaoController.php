@@ -4,8 +4,8 @@ class TorneioeliminacaoController extends Controller {
     private $db;
 
     public function __construct() {
-        parent::__construct(); // Inicializa baseUrl e lógica do Core
-        $this->db = \Core\Database::getInstance();
+        parent::__construct(); // Garante a inicialização das URLs na classe pai
+        $this->db = Database::getInstance();
     }
 
     public function gerenciar($id_torneio) {

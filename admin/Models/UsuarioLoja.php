@@ -1,7 +1,5 @@
 <?php
 
-use Core\Database;
-
 class UsuarioLoja
 {
     private $db;
@@ -17,7 +15,7 @@ class UsuarioLoja
         $sql = "SELECT u.*, l.nome_loja
                 FROM usuarios_loja u
                 JOIN lojas l ON l.id_loja = u.id_loja
-                ORDER BY u.id_usuario DESC";
+                ORDER BY l.id_loja DESC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

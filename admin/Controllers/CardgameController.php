@@ -1,7 +1,5 @@
 <?php
 
-use Core\Database;
-
 class CardgameController
 {
     private $model;

@@ -1,7 +1,5 @@
 <?php
 
-use Core\Database;
-
 class ContratoHistorico
 {
     private $db;

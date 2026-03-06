@@ -1,7 +1,5 @@
 <?php
 
-use Core\Database;
-
 class Cardgame
 {
     private $db;

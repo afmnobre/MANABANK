@@ -1,49 +1,69 @@
+<?php
+/**
+ * Lógica de detecção de URL para garantir funcionamento Local e Remoto
+ */
+$isMANABANK = (strpos($_SERVER['SCRIPT_NAME'], '/MANABANK/') !== false);
+$baseUrl = $isMANABANK ? '/MANABANK/' : '/';
+
+// Caminho para a pasta de tipos de pagamento
+$pagamentosPath = $baseUrl . 'public/storage/uploads/tipos_pagamento/';
+?>
+
 <div class="container mt-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>Tipos de Pagamento</h3>
-        <a href="/admin/tipopagamento/form" class="btn btn-primary">Novo Tipo</a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-dark">Tipos de Pagamento</h3>
+        <a href="<?= $baseUrl ?>admin/tipopagamento/form" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-lg"></i> Novo Tipo
+        </a>
     </div>
 
-    <div class="card shadow">
-        <div class="card-body">
-
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
             <?php if (!empty($tipos)): ?>
                 <div class="table-responsive">
-                    <table class="table table-striped align-middle">
-                        <thead>
+                    <table class="table table-hover align-middle mb-0 bg-white">
+                        <thead class="table-light">
                             <tr>
-                                <th>ID</th>
-                                <th>Nome</th>
-                                <th>Imagem</th>
-                                <th>Ações</th>
+                                <th class="ps-4" style="width: 80px;">ID</th>
+                                <th>Nome do Método</th>
+                                <th>Ícone / Imagem</th>
+                                <th class="text-center pe-4">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($tipos as $tipo): ?>
                                 <?php
                                     $imgPath = !empty($tipo['imagem'])
-                                        ? "/public/storage/uploads/tipos_pagamento/{$tipo['id_pagamento']}/{$tipo['imagem']}"
+                                        ? $pagamentosPath . $tipo['id_pagamento'] . '/' . $tipo['imagem']
                                         : null;
                                 ?>
                                 <tr>
-                                    <td><?= $tipo['id_pagamento'] ?></td>
-                                    <td><?= htmlspecialchars($tipo['nome']) ?></td>
+                                    <td class="ps-4 text-muted">#<?= $tipo['id_pagamento'] ?></td>
                                     <td>
-                                        <?php if ($imgPath): ?>
-                                            <img src="<?= $imgPath ?>" alt="<?= $tipo['nome'] ?>" style="height:40px;">
-                                        <?php else: ?>
-                                            -
-                                        <?php endif; ?>
+                                        <span class="fw-bold text-dark"><?= htmlspecialchars($tipo['nome']) ?></span>
                                     </td>
                                     <td>
-                                        <a href="/admin/tipopagamento/form/<?= $tipo['id_pagamento'] ?>" class="btn btn-sm btn-warning">
-                                            Editar
-                                        </a>
-                                        <a href="/admin/tipopagamento/delete/<?= $tipo['id_pagamento'] ?>" class="btn btn-sm btn-danger"
-                                           onclick="return confirm('Deseja realmente excluir este tipo de pagamento?')">
-                                           Excluir
-                                        </a>
+                                        <?php if ($imgPath): ?>
+                                            <img src="<?= $imgPath ?>" alt="<?= $tipo['nome'] ?>"
+                                                 style="height: 40px; width: 60px; object-fit: contain;"
+                                                 class="rounded border bg-light p-1">
+                                        <?php else: ?>
+                                            <span class="badge bg-light text-secondary border">Sem imagem</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-center pe-4">
+                                        <div class="btn-group">
+                                            <a href="<?= $baseUrl ?>admin/tipopagamento/form/<?= $tipo['id_pagamento'] ?>"
+                                               class="btn btn-sm btn-outline-warning">
+                                               Editar
+                                            </a>
+                                            <a href="<?= $baseUrl ?>admin/tipopagamento/delete/<?= $tipo['id_pagamento'] ?>"
+                                               class="btn btn-sm btn-outline-danger"
+                                               onclick="return confirm('Deseja realmente excluir este tipo de pagamento?')">
+                                               Excluir
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -51,11 +71,11 @@
                     </table>
                 </div>
             <?php else: ?>
-                <p class="text-muted">Nenhum tipo de pagamento cadastrado.</p>
+                <div class="py-5 text-center">
+                    <p class="text-muted mb-0">Nenhum tipo de pagamento cadastrado no sistema.</p>
+                </div>
             <?php endif; ?>
-
         </div>
     </div>
 
 </div>
-
