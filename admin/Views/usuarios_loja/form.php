@@ -14,7 +14,7 @@ $formAction = $isEdit
 
 <div class="container mt-4 mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold text-dark">
+        <h3 class="fw-bold text-light">
             <?= $isEdit ? "Editar Usuário" : "Novo Usuário de Loja" ?>
         </h3>
         <a href="<?= $baseUrl ?>admin/usuarioLoja" class="btn btn-outline-secondary btn-sm px-3">

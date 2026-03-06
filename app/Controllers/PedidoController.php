@@ -77,37 +77,41 @@ class PedidoController extends Controller
 		]);
 	}
 
-    public function salvar() {
-        AuthMiddleware::verificarLogin();
-        $pedidoModel = new Pedido();
-        $dados = $_POST;
-        $idLoja = $_SESSION['LOJA']['id_loja'];
-        $data = $dados['dataSelecionada'] ?? date('Y-m-d');
+	public function salvar() {
+			AuthMiddleware::verificarLogin();
+			$pedidoModel = new Pedido();
+			$dados = $_POST;
+			$idLoja = $_SESSION['LOJA']['id_loja'];
+			$data = $dados['dataSelecionada'] ?? date('Y-m-d');
 
-        foreach ($dados['itens'] as $idCliente => $itens) {
-            $variado = (float)str_replace(',', '.', $dados['variado'][$idCliente] ?? 0);
-            $temItens = array_sum($itens) > 0;
+			foreach ($dados['itens'] as $idCliente => $itens) {
+				$valorRaw = $dados['variado'][$idCliente] ?? '0';
 
-            if ($temItens || $variado > 0) {
-                $pedidoModel->salvar([
-                    'id_cliente'         => $idCliente,
-                    'id_loja'            => $idLoja,
-                    'valor_variado'      => $variado,
-                    'observacao_variado' => $dados['observacao_variado'][$idCliente] ?? null,
-                    'pedido_pago'        => isset($dados['pago'][$idCliente]) ? 1 : 0,
-                    'itens'              => $itens,
-                    'data_pedido'        => $data
-                ]);
-            } elseif (isset($dados['id_pedido'][$idCliente])) {
-                // Se o pedido existe mas foi zerado, removemos se for Gerente
-                if ($_SESSION['USUARIO']['perfil'] === 'GERENTE') {
-                    $pedidoModel->excluir($dados['id_pedido'][$idCliente]);
-                }
-            }
-        }
+				// BLINDAGEM: Remove tudo que não for número ou vírgula, depois trata a vírgula
+				// Isso evita que "5.429,00" se torne "542900"
+				$valorLimpo = preg_replace('/[^\d,]/', '', $valorRaw);
+				$variado = (float)str_replace(',', '.', $valorLimpo);
 
-        $this->redirecionarComFiltros($data, $dados['cardgamesSelecionados'] ?? []);
-    }
+				$temItens = array_sum($itens) > 0;
+
+				if ($temItens || $variado > 0) {
+					$pedidoModel->salvar([
+						'id_cliente'         => $idCliente,
+						'id_loja'            => $idLoja,
+						'valor_variado'      => $variado,
+						'observacao_variado' => $dados['observacao_variado'][$idCliente] ?? null,
+						'pedido_pago'        => isset($dados['pago'][$idCliente]) ? 1 : 0,
+						'itens'              => $itens,
+						'data_pedido'        => $data
+					]);
+				} elseif (isset($dados['id_pedido'][$idCliente])) {
+					if ($_SESSION['USUARIO']['perfil'] === 'GERENTE') {
+						$pedidoModel->excluir($dados['id_pedido'][$idCliente]);
+					}
+				}
+			}
+			$this->redirecionarComFiltros($data, $dados['cardgamesSelecionados'] ?? []);
+	}
 
     public function salvarPagamento() {
         AuthMiddleware::verificarLogin();
@@ -115,8 +119,11 @@ class PedidoController extends Controller
         $dados = $_POST;
         $idCliente = (int)$dados['id_cliente'];
 
-        // Normalização de valores
-        $variado = (float)str_replace(['.', ','], ['', '.'], $dados['variado'][$idCliente] ?? 0);
+        $valorRaw = $dados['variado'][$idCliente] ?? '0';
+
+        // A mesma blindagem aplicada aqui
+        $valorLimpo = preg_replace('/[^\d,]/', '', $valorRaw);
+        $variado = (float)str_replace(',', '.', $valorLimpo);
 
         $payload = [
             'id_cliente'         => $idCliente,
@@ -128,10 +135,8 @@ class PedidoController extends Controller
             'itens'              => $dados['itens'][$idCliente] ?? []
         ];
 
-        // O model->salvar já resolve se é INSERT ou UPDATE
         $idPedido = $pedidoModel->salvar($payload);
 
-        // Salva os métodos de rateio
         if (!empty($dados['valor'])) {
             $pedidoModel->salvarTiposPagamento($idPedido, $dados['valor']);
         }

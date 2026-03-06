@@ -206,19 +206,26 @@ class Pedido
 
 	public function salvarTiposPagamento($idPedido, $pagamentos)
 	{
-		// Limpa pagamentos anteriores para evitar erro de PRIMARY KEY (id_pedido, id_pagamento)
 		$this->db->prepare("DELETE FROM pedido_pagamento WHERE id_pedido = ?")->execute([$idPedido]);
 
 		$sql = "INSERT INTO pedido_pagamento (id_pedido, id_pagamento, valor) VALUES (?, ?, ?)";
 		$stmt = $this->db->prepare($sql);
 
 		foreach ($pagamentos as $idPagamento => $valor) {
-			$valorNum = (float)str_replace(['.', ','], ['', '.'], $valor);
+			// Se já for um float/numeric vindo do input type="number", não precisa de replace
+			if (is_numeric($valor)) {
+				$valorNum = (float)$valor;
+			} else {
+				// Se vier formatado (R$ 1.200,00), limpamos
+				$valorLimpo = preg_replace('/[^\d,]/', '', $valor);
+				$valorNum = (float)str_replace(',', '.', $valorLimpo);
+			}
+
 			if ($valorNum > 0) {
 				$stmt->execute([$idPedido, $idPagamento, $valorNum]);
 			}
 		}
-    }
+	}
 
 	public function listarCardgamesPorCliente($idCliente)
 	{

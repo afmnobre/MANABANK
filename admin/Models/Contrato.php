@@ -42,31 +42,45 @@ class Contrato
     }
 
     // Criar contrato
-    public function criar($dados)
+	public function criar($dados)
     {
-        // Se for ativo, desativa outros contratos da mesma loja
+        // 1. Gerar o número único: IDLOJA + ANO + MES + TIPO
+        $ano = date('Y');
+        $mes = date('m');
+        $siglaTipo = strtoupper(substr($dados['tipo'], 0, 3));
+        $numeroGerado = $dados['id_loja'] . $ano . $mes . $siglaTipo;
+
+        // 2. Se for ativo, suspende outros e atualiza a tabela LOJAS
         if ($dados['status'] === 'ativo') {
             $stmt = $this->db->prepare("UPDATE contratos SET status = 'suspenso' WHERE id_loja = :id_loja AND status = 'ativo'");
             $stmt->execute(['id_loja' => $dados['id_loja']]);
+
+            $stmtL = $this->db->prepare("UPDATE lojas SET numero_contrato = :numero WHERE id_loja = :id_loja");
+            $stmtL->execute(['numero' => $numeroGerado, 'id_loja' => $dados['id_loja']]);
         }
 
-        $sql = "INSERT INTO contratos (id_loja, tipo, data_inicio, data_fim, status)
-                VALUES (:id_loja, :tipo, :data_inicio, :data_fim, :status)";
+        // 3. Insere na tabela CONTRATOS com o novo campo
+        $sql = "INSERT INTO contratos (id_loja, tipo, data_inicio, data_fim, status, numero_contrato)
+                VALUES (:id_loja, :tipo, :data_inicio, :data_fim, :status, :numero_contrato)";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
-            'id_loja'     => $dados['id_loja'],
-            'tipo'        => $dados['tipo'],
-            'data_inicio' => $dados['data_inicio'],
-            'data_fim'    => $dados['data_fim'],
-            'status'      => $dados['status']
+            'id_loja'         => $dados['id_loja'],
+            'tipo'            => $dados['tipo'],
+            'data_inicio'     => $dados['data_inicio'],
+            'data_fim'        => $dados['data_fim'],
+            'status'          => $dados['status'],
+            'numero_contrato' => $numeroGerado // Gravando na tabela contratos
         ]);
 
         $id_contrato = $this->db->lastInsertId();
 
-        // Atualiza status dos usuários da loja
         $this->atualizarUsuariosPorStatus($dados['id_loja'], $dados['status']);
 
-        return $id_contrato;
+        // Retornamos um array para o Controller ter acesso ao ID e ao Número Gerado
+        return [
+            'id'     => $id_contrato,
+            'numero' => $numeroGerado
+        ];
     }
 
     // Atualizar contrato
@@ -79,6 +93,11 @@ class Contrato
                 'id_loja'     => $dados['id_loja'],
                 'id_contrato' => $dados['id_contrato']
             ]);
+
+            // Recupera o numero_contrato deste contrato para atualizar na tabela LOJAS
+            $c = $this->buscarPorId($dados['id_contrato']);
+            $stmtL = $this->db->prepare("UPDATE lojas SET numero_contrato = :numero WHERE id_loja = :id_loja");
+            $stmtL->execute(['numero' => $c['numero_contrato'], 'id_loja' => $dados['id_loja']]);
         }
 
         $sql = "UPDATE contratos SET
@@ -97,7 +116,6 @@ class Contrato
             'id_contrato' => $dados['id_contrato']
         ]);
 
-        // Atualiza status dos usuários da loja
         $this->atualizarUsuariosPorStatus($dados['id_loja'], $dados['status']);
     }
 

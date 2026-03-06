@@ -37,17 +37,17 @@ class Home
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function contratoInfo($idLoja)
-    {
+	public function contratoInfo($idLoja)
+	{
 		$sql = "SELECT
 					L.numero_contrato AS numero,
-					DATEDIFF(C.data_fim, CURDATE()) AS dias_restantes
-				FROM contratos C
-				INNER JOIN lojas L ON C.id_loja = L.id_loja
-				WHERE C.id_loja = :id_loja
-				  AND C.status = 'ativo'
-				ORDER BY C.data_fim DESC
-				LIMIT 1";
+					(SELECT DATEDIFF(C.data_fim, CURDATE())
+					 FROM contratos C
+					 WHERE C.id_loja = L.id_loja AND C.status = 'ativo'
+					 ORDER BY C.id_contrato DESC LIMIT 1) AS dias_restantes
+				FROM lojas L
+				WHERE L.id_loja = :id_loja";
+
 		$stmt = $this->db->prepare($sql);
 		$stmt->execute(['id_loja' => $idLoja]);
 		return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -122,6 +122,32 @@ class Home
             'contratos_vencendo' => $contratos['contratos_vencendo'] ?? 0
         ];
     }
+
+	public function detalhesContratoLoja($idLoja)
+	{
+		// Selecionamos explicitamente l.cnpj
+		$sql = "SELECT
+					l.id_loja,
+					l.nome_loja,
+					l.cnpj,
+					l.logo,
+					l.cor_tema,
+					l.favicon,
+					c.id_contrato,
+					c.numero_contrato,
+					c.data_inicio,
+					c.data_fim,
+					c.tipo,
+					c.status
+				FROM lojas l
+				LEFT JOIN contratos c ON l.id_loja = c.id_loja AND c.status = 'ativo'
+				WHERE l.id_loja = :id_loja
+				LIMIT 1";
+
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute(['id_loja' => $idLoja]);
+		return $stmt->fetch(PDO::FETCH_ASSOC);
+	}
 }
 
 

@@ -11,7 +11,7 @@ $lojasPath = $baseUrl . 'public/storage/uploads/lojas/';
 
 <div class="container mt-4 mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold text-dark">Gestão de Contratos</h3>
+        <h3 class="fw-bold text-light">Gestão de Contratos</h3>
         <a href="<?= $baseUrl ?>admin/contrato/form" class="btn btn-primary shadow-sm">
             <i class="bi bi-file-earmark-plus"></i> Novo Contrato
         </a>
@@ -25,6 +25,7 @@ $lojasPath = $baseUrl . 'public/storage/uploads/lojas/';
                         <tr>
                             <th class="ps-4">Logo</th>
                             <th>Loja / Cliente</th>
+                            <th>Nº Contrato</th>
                             <th>Tipo Plano</th>
                             <th>Vigência</th>
                             <th class="text-center">Status</th>
@@ -58,6 +59,11 @@ $lojasPath = $baseUrl . 'public/storage/uploads/lojas/';
                                         <small class="text-muted">ID Loja: #<?= $loja['id_loja'] ?></small>
                                     </td>
                                     <td>
+                                        <span class="text-primary fw-bold small">
+                                            <?= htmlspecialchars($c['numero_contrato'] ?? 'N/A') ?>
+                                        </span>
+                                    </td>
+                                    <td>
                                         <span class="badge bg-light text-dark border fw-normal">
                                             <?= ucfirst(htmlspecialchars($c['tipo'])) ?>
                                         </span>
@@ -86,8 +92,8 @@ $lojasPath = $baseUrl . 'public/storage/uploads/lojas/';
                                                 Editar
                                             </a>
                                             <a href="<?= $baseUrl ?>admin/contrato/delete/<?= $c['id_contrato'] ?>"
-                                               class="btn btn-sm btn-outline-danger"
-                                               onclick="return confirm('Deseja realmente excluir este contrato?')">
+                                                class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Deseja realmente excluir este contrato?')">
                                                 Excluir
                                             </a>
                                         </div>
@@ -97,7 +103,7 @@ $lojasPath = $baseUrl . 'public/storage/uploads/lojas/';
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="6" class="text-center py-5 text-muted">Nenhum contrato registrado.</td>
+                                <td colspan="7" class="text-center py-5 text-muted">Nenhum contrato registrado.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -116,7 +122,7 @@ $lojasPath = $baseUrl . 'public/storage/uploads/lojas/';
             </div>
             <div class="modal-body p-4" id="conteudoContrato">
                 </div>
-            <div class="modal-footer bg-light">
+            <div class="modal-footer bg-light d-print-none">
                 <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
                 <button type="button" class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir</button>
             </div>
@@ -125,7 +131,6 @@ $lojasPath = $baseUrl . 'public/storage/uploads/lojas/';
 </div>
 
 <script>
-// Dados injetados do PHP para o escopo global do JS
 window.contratosData = <?= json_encode($contratos) ?>;
 window.lojasData = <?= json_encode($lojas) ?>;
 window.baseUrlPath = "<?= $baseUrl ?>";
@@ -136,16 +141,18 @@ window.abrirContrato = function(id_contrato) {
 
     if (!contrato || !loja) return;
 
-    const numeroContrato = `CT-${contrato.id_contrato.toString().padStart(4, '0')}`;
+    // Prioriza o numero_contrato gerado no banco
+    const numeroContrato = contrato.numero_contrato || `CT-${contrato.id_contrato.toString().padStart(4, '0')}`;
     const dataIni = new Date(contrato.data_inicio).toLocaleDateString('pt-BR');
     const dataFim = new Date(contrato.data_fim).toLocaleDateString('pt-BR');
     const logoUrl = `${window.baseUrlPath}public/storage/uploads/lojas/${loja.id_loja}/${loja.logo}`;
 
     const html = `
-        <div class="text-dark"> <div class="d-flex justify-content-between align-items-start mb-4">
+        <div class="text-dark">
+            <div class="d-flex justify-content-between align-items-start mb-4">
                 <div>
                     <h4 class="mb-0 fw-bold text-dark">ManaBank / TCG Balcão</h4>
-                    <p class="text-muted small">Nº do Contrato: ${numeroContrato}</p>
+                    <p class="text-muted small">Nº do Contrato: <strong>${numeroContrato}</strong></p>
                 </div>
                 ${loja.logo ? `<img src="${logoUrl}" style="height:50px; border:1px solid #dee2e6; padding:5px; border-radius:5px; background: white;">` : ''}
             </div>
@@ -173,11 +180,8 @@ window.abrirContrato = function(id_contrato) {
                 </h6>
 
                 <p>Este documento estabelece os termos de uso do sistema <strong>TCG BALCÃO</strong> pela contratante <strong>${loja.nome_loja}</strong>.</p>
-
                 <p><strong>1. Objeto:</strong> Licença de uso temporário de software de gestão comercial (SaaS) especializado em Trading Card Games, com acesso via navegador.</p>
-
                 <p><strong>2. Suporte:</strong> A ManaBank garante suporte técnico para correção de falhas e atualizações de segurança durante o período vigente.</p>
-
                 <p><strong>3. Vencimento:</strong> O acesso ao banco de dados e funcionalidades será interrompido automaticamente em caso de não renovação após o dia <strong>${dataFim}</strong>.</p>
 
                 <div class="mt-5 text-center">

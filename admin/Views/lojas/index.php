@@ -11,7 +11,7 @@ $lojasPath = $baseUrl . 'public/storage/uploads/lojas/';
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold text-dark">Lojas Cadastradas</h3>
+        <h3 class="fw-bold text-light">Lojas Cadastradas</h3>
         <a href="<?= $baseUrl ?>admin/loja/create" class="btn btn-primary shadow-sm">
             Nova Loja
         </a>
@@ -55,9 +55,9 @@ $lojasPath = $baseUrl . 'public/storage/uploads/lojas/';
                                     </td>
                                     <td><small class="text-muted"><?= htmlspecialchars($loja['cnpj']) ?></small></td>
                                     <td>
-                                        <?php if(!empty($loja['contrato_ativo'])): ?>
+                                        <?php if(!empty($loja['numero_contrato'])): ?>
                                             <span class="badge bg-success-subtle text-success border border-success-subtle px-2">
-                                                <?= htmlspecialchars($loja['contrato_ativo']) ?>
+                                                <?= htmlspecialchars($loja['numero_contrato']) ?>
                                             </span>
                                         <?php else: ?>
                                             <span class="text-muted small italic">Sem contrato</span>
@@ -134,7 +134,7 @@ function abrirHistorico(id_loja) {
                             <table class="table table-sm table-hover align-middle">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Nº</th>
+                                        <th>Nº Contrato</th>
                                         <th>Tipo</th>
                                         <th>Vigência</th>
                                         <th>Status</th>
@@ -148,8 +148,11 @@ function abrirHistorico(id_loja) {
                 const fim = new Date(h.data_fim_contrato).toLocaleDateString('pt-BR');
                 const vinculo = new Date(h.data_vinculo).toLocaleDateString('pt-BR');
 
+                // Exibe o novo numero_contrato ou o ID como fallback
+                const nContrato = h.numero_contrato || `#${h.id_contrato}`;
+
                 html += `<tr>
-                            <td class="text-muted">#${h.id_contrato}</td>
+                            <td class="fw-bold text-primary small">${nContrato}</td>
                             <td class="fw-bold small">${h.tipo_contrato}</td>
                             <td class="small">${inicio} a ${fim}</td>
                             <td><span class="badge bg-light text-dark border small fw-normal">${h.status_contrato}</span></td>

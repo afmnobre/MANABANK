@@ -11,7 +11,7 @@ $cardgamesPath = $baseUrl . 'public/storage/uploads/cardgames/';
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold text-dark">Cardgames Cadastrados</h3>
+            <h3 class="fw-bold text-light">Cardgames Cadastrados</h3>
         <a href="<?= $baseUrl ?>admin/cardgame/form" class="btn btn-primary shadow-sm">
             Novo Cardgame
         </a>

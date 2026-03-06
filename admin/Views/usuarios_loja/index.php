@@ -8,7 +8,7 @@ $baseUrl = $isMANABANK ? '/MANABANK/' : '/';
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold text-dark">Usuários das Lojas</h3>
+        <h3 class="fw-bold text-light">Usuários das Lojas</h3>
         <a href="<?= $baseUrl ?>admin/usuarioLoja/form" class="btn btn-primary shadow-sm">
             <i class="bi bi-person-plus"></i> Cadastrar Usuário
         </a>

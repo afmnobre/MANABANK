@@ -178,8 +178,10 @@ window.initCalendario = function(datasPendentes, dataSelecionada) {
 window.abrirModalPagamento = function (idPedido, idCliente, valorTotal, checkboxEl) {
     if (!checkboxEl.checked) return;
 
-    // Normalização para evitar erro no toFixed(2)
-    const total = parseFloat(String(valorTotal).replace(',', '.')) || 0;
+    // Pegamos o valor puro do dataset do TD de total para evitar confusão com R$ ou vírgulas
+    const tdTotal = document.getElementById('total_' + idCliente);
+    const total = parseFloat(tdTotal.dataset.total) || 0;
+
     if (total <= 0) {
         alert("Este pedido não possui valor para pagamento.");
         checkboxEl.checked = false;
@@ -329,6 +331,7 @@ window.atualizarTotalLinha = function(idCliente) {
     });
     const inputV = document.querySelector(`input[name="variado[${idCliente}]"]`);
     if (inputV) {
+        // CORREÇÃO JS: Remove todos os pontos e troca a vírgula por ponto para o cálculo
         let valor = inputV.value.replace(/\./g, '').replace(',', '.');
         total += parseFloat(valor) || 0;
     }

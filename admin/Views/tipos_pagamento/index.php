@@ -12,7 +12,7 @@ $pagamentosPath = $baseUrl . 'public/storage/uploads/tipos_pagamento/';
 <div class="container mt-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold text-dark">Tipos de Pagamento</h3>
+        <h3 class="fw-bold text-light">Tipos de Pagamento</h3>
         <a href="<?= $baseUrl ?>admin/tipopagamento/form" class="btn btn-primary shadow-sm">
             <i class="bi bi-plus-lg"></i> Novo Tipo
         </a>

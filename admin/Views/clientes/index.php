@@ -26,7 +26,7 @@ function formatarTelefonePHP($tel) {
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold text-dark">Clientes</h3>
+        <h3 class="fw-bold text-light">Clientes</h3>
         <span class="badge bg-primary shadow-sm"><?= count($clientes) ?> Registrados</span>
     </div>
 
