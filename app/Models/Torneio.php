@@ -181,14 +181,74 @@ class Torneio
 		return $stmt->fetch(PDO::FETCH_ASSOC);
 	}
 
-	public function listarParticipantesConfirmados($idTorneio)
+	public function getRankingPorJogo($id_loja, $ano, $mes = null)
 	{
-		$sql = "SELECT c.id_cliente, c.nome
-				FROM torneio_participantes tp
-				JOIN clientes c ON c.id_cliente = tp.id_cliente
-				WHERE tp.id_torneio = ?";
+		// Ajustado: cg.nome, c.nome e t.data_criacao conforme sua estrutura
+		$sql = "SELECT
+					cg.nome as cardgame,
+					c.nome as cliente_nome,
+					SUM(trf.pontos_totais) as total_pontos
+				FROM torneio_resultados_finais trf
+				JOIN clientes c ON trf.id_cliente = c.id_cliente
+				JOIN torneios t ON trf.id_torneio = t.id_torneio
+				JOIN cardgames cg ON t.id_cardgame = cg.id_cardgame
+				WHERE t.id_loja = ? AND YEAR(t.data_criacao) = ?";
+
+		$params = [$id_loja, $ano];
+
+		if ($mes) {
+			$sql .= " AND MONTH(t.data_criacao) = ?";
+			$params[] = $mes;
+		}
+
+		$sql .= " GROUP BY cg.id_cardgame, c.id_cliente
+				  ORDER BY cg.nome ASC, total_pontos DESC";
+
 		$stmt = $this->db->prepare($sql);
-		$stmt->execute([$idTorneio]);
+		$stmt->execute($params);
+		$resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+		$rankingOrganizado = [];
+
+		foreach ($resultados as $row) {
+			$jogo = $row['cardgame'];
+
+			if (!isset($rankingOrganizado[$jogo])) {
+				$rankingOrganizado[$jogo] = [];
+			}
+
+			if (count($rankingOrganizado[$jogo]) < 3) {
+				$rankingOrganizado[$jogo][] = [
+					'nome' => $row['cliente_nome'],
+					'total_pontos' => $row['total_pontos']
+				];
+			}
+		}
+
+		return $rankingOrganizado;
+	}
+
+	public function buscarRankingAcumulado($cardgame, $periodo = 'mensal')
+	{
+		$filtroData = ($periodo === 'mensal')
+			? "AND MONTH(t.data_torneio) = MONTH(CURRENT_DATE()) AND YEAR(t.data_torneio) = YEAR(CURRENT_DATE())"
+			: "AND YEAR(t.data_torneio) = YEAR(CURRENT_DATE())";
+
+		$sql = "SELECT
+					c.nome,
+					SUM(trf.pontos_totais) as total_pontos
+				FROM torneio_resultados_finais trf
+				JOIN clientes c ON trf.id_cliente = c.id_cliente
+				JOIN torneios t ON trf.id_torneio = t.id_torneio
+				WHERE t.cardgame = ? $filtroData
+				GROUP BY c.id_cliente
+				ORDER BY total_pontos DESC
+				LIMIT 3";
+
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$cardgame]);
 		return $stmt->fetchAll(PDO::FETCH_ASSOC);
 	}
+
+
 }

@@ -284,5 +284,34 @@ class TorneioSuico extends Torneio
 		return $stmt->fetchAll(PDO::FETCH_ASSOC);
 	}
 
+	public function salvarResultadosFinais($id_torneio, $ranking)
+	{
+		$this->db->beginTransaction();
+		try {
+			$sql = "INSERT INTO torneio_resultados_finais (id_torneio, id_cliente, pontos_totais, posicao)
+					VALUES (?, ?, ?, ?)
+					ON DUPLICATE KEY UPDATE pontos_totais = VALUES(pontos_totais), posicao = VALUES(posicao)";
+
+			$stmt = $this->db->prepare($sql);
+
+			foreach ($ranking as $index => $jogador) {
+				$posicao = $index + 1;
+				$stmt->execute([
+					$id_torneio,
+					$jogador['id_cliente'],
+					$jogador['pontos'],
+					$posicao
+				]);
+			}
+
+			$this->db->commit();
+			return true;
+		} catch (Exception $e) {
+			$this->db->rollBack();
+			return false;
+		}
+	}
+
+
 
 }

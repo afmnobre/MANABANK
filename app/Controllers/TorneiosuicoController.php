@@ -78,15 +78,21 @@ class TorneiosuicoController extends Controller
         exit;
     }
 
-    public function proximaRodada($id_torneio)
-    {
-        $model = new TorneioSuico();
-        $model->gerarProximaRodada($id_torneio);
+	public function proximaRodada($id_torneio)
+	{
+		$model = new TorneioSuico();
+		$sucesso = $model->gerarProximaRodada($id_torneio);
 
-        // REFATORADO: Adicionado $this->baseUrl
-        header("Location: " . $this->baseUrl . "torneiosuico/gerenciar/$id_torneio");
-        exit;
-    }
+		// Verifica se o torneio acabou de ser finalizado
+		$torneio = $model->buscar($id_torneio, $_SESSION['LOJA']['id_loja']);
+		if ($torneio['status'] === 'finalizado') {
+			$ranking = $model->calcularRanking($id_torneio);
+			$model->salvarResultadosFinais($id_torneio, $ranking);
+		}
+
+		header("Location: " . $this->baseUrl . "torneiosuico/gerenciar/$id_torneio");
+		exit;
+	}
 
 	public function verPareamento($id_torneio, $numero_rodada)
 	{

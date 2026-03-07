@@ -2,17 +2,32 @@
 
 class TorneioController extends Controller
 {
-    public function index()
-    {
-        AuthMiddleware::verificarLogin();
+	public function index()
+	{
+		AuthMiddleware::verificarLogin();
 
-        $model = new Torneio();
-        $id_loja = $_SESSION['LOJA']['id_loja'];
+		$model = new Torneio();
+		$id_loja = $_SESSION['LOJA']['id_loja'];
 
-        $torneios = $model->listarTodos($id_loja);
+            // 1. Puxa a lista de torneios (o que você já tinha)
+		$torneios = $model->listarTodos($id_loja);
 
-        $this->view('torneio/index', ['torneios' => $torneios]);
-    }
+		// 2. Define o período atual para os rankings
+		$anoAtual = date('Y');
+		$mesAtual = date('m');
+
+		// 3. Busca os rankings (Mensal e Anual)
+		// Certifique-se que o método no Model se chama 'getRankingPorJogo'
+		$rankingMensal = $model->getRankingPorJogo($id_loja, $anoAtual, $mesAtual);
+		$rankingAnual  = $model->getRankingPorJogo($id_loja, $anoAtual);
+
+		// 4. Envia tudo para a View
+		$this->view('torneio/index', [
+			'torneios'      => $torneios,
+			'rankingMensal' => $rankingMensal,
+			'rankingAnual'  => $rankingAnual
+		]);
+	}
 
     public function criar()
     {
