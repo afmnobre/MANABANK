@@ -3,7 +3,7 @@
 // 1. Puxa as informações da sessão
 $loja = $_SESSION['LOJA'] ?? [];
 $idLoja      = $loja['id_loja'] ?? 0;
-$nomeLoja    = $loja['nome_loja'] ?? 'Sistema TCGBalcão';
+$nomeLoja    = $loja['nome_loja'] ?? 'Sistema MANABANK';
 $logoFile    = $loja['logo'] ?? 'logo.png';
 $faviconFile = $loja['favicon'] ?? 'favicon.ico';
 $corTema     = $loja['cor_tema'] ?? '#000';
@@ -47,11 +47,10 @@ $perfilUsuario = $usuarioLogado['perfil'] ?? 'Membro';
     <link rel="stylesheet" href="<?= $base ?>public/css/pedido.css">
     <link rel="stylesheet" href="<?= $base ?>public/css/produto.css">
     <link rel="stylesheet" href="<?= $base ?>public/css/torneioEliminacao.css">
-
 </head>
 <body class="bg-dark text-light">
 
-<nav class="navbar navbar-expand-lg fixed-top shadow" style="background-color: <?= htmlspecialchars($corTema) ?>;">
+<nav class="navbar navbar-expand-lg fixed-top shadow" style="background-color: <?= htmlspecialchars($corTema) ?> !important;">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="<?= $base ?>home">
             <img src="<?= htmlspecialchars($logoPath) ?>" alt="Logo" height="40" class="me-2">
@@ -68,6 +67,7 @@ $perfilUsuario = $usuarioLogado['perfil'] ?? 'Membro';
                 <li class="nav-item"><a class="nav-link" href="<?= $base ?>pedido">Pedidos</a></li>
                 <li class="nav-item"><a class="nav-link" href="<?= $base ?>cliente">Clientes</a></li>
                 <li class="nav-item"><a class="nav-link" href="<?= $base ?>torneio">Torneios</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $base ?>estatisticasjogos">Estatísticas</a></li>
                 <li class="nav-item"><a class="nav-link" href="<?= $base ?>produto">Produtos & Estoque</a></li>
                 <li class="nav-item"><a class="nav-link" href="<?= $base ?>relatorio">Relatórios</a></li>
 

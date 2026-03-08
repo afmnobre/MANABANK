@@ -40,25 +40,36 @@ public function index()
     /* =========================================================
        STORE
     ==========================================================*/
-    public function store()
-    {
-        $usuarioModel = new UsuarioLoja();
+	public function store()
+	{
+		// Verifica se a requisição é POST
+		if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+			header("Location: /MANABANK/admin/usuarioLoja");
+			exit;
+		}
 
-        $dados = [
-            'id_loja' => $_POST['id_loja'],
-            'nome'    => $_POST['nome'],
-            'email'   => $_POST['email'],
-            'senha'   => $_POST['senha'],
-            'perfil'  => $_POST['perfil'],
-            'ativo'   => $_POST['ativo'] ?? 1
-        ];
+		$usuarioModel = new UsuarioLoja();
 
-        $usuarioModel->criar($dados);
+		// Captura segura dos dados
+		$dados = [
+			'id_loja' => $_POST['id_loja'] ?? null,
+			'nome'    => $_POST['nome'] ?? null,
+			'email'   => $_POST['email'] ?? null,
+			'senha'   => $_POST['senha'] ?? null,
+			'perfil'  => $_POST['perfil'] ?? 'atendente',
+			'ativo'   => $_POST['ativo'] ?? 1
+		];
 
-        header("Location: /admin/usuarioLoja");
-        exit;
+		// Validação mínima antes de prosseguir
+		if (!$dados['id_loja'] || !$dados['email'] || !$dados['senha']) {
+			die("Erro: Dados obrigatórios não preenchidos.");
+		}
+
+		$usuarioModel->criar($dados);
+
+		header("Location: /MANABANK/admin/usuarioLoja");
+		exit;
     }
-
     /* =========================================================
        UPDATE
     ==========================================================*/

@@ -440,3 +440,42 @@ window.imprimirRecibo = function() {
         f.contentWindow.print();
     }
 }
+
+window.verificarEstoqueDisponivel = function(input) {
+    const controla = parseInt(input.getAttribute('data-controla'));
+
+    // Se não controla estoque, não faz nada
+    if (controla !== 1) return;
+
+    const estoqueDisponivel = parseInt(input.getAttribute('data-estoque'));
+    const quantidadeTentada = parseInt(input.value);
+    const nomeProduto = input.getAttribute('data-nome');
+
+    if (quantidadeTentada > estoqueDisponivel) {
+        // Preenche as informações no modalEstoque
+        const msgEstoque = document.getElementById('msgEstoque');
+        const dispLabel = document.getElementById('estoqueDisponivel');
+        const tentLabel = document.getElementById('estoqueTentativa');
+
+        if (msgEstoque) msgEstoque.innerHTML = `O item <strong>${nomeProduto}</strong> não possui saldo suficiente no estoque.`;
+        if (dispLabel) dispLabel.innerText = estoqueDisponivel;
+        if (tentLabel) tentLabel.innerText = quantidadeTentada;
+
+        // Dispara o modal do Bootstrap
+        const modalElement = document.getElementById('modalEstoque');
+        if (modalElement) {
+            const modalEstoque = new bootstrap.Modal(modalElement);
+            modalEstoque.show();
+        }
+
+        // Reseta o campo para evitar erro de processamento no PHP
+        input.value = 0;
+
+        // Recalcula o total da linha (também via window)
+        const idCliente = input.getAttribute('data-cliente');
+        if (typeof window.atualizarTotalLinha === "function") {
+            window.atualizarTotalLinha(idCliente);
+        }
+    }
+};
+

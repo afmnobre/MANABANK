@@ -225,52 +225,75 @@ class TorneioEliminacao extends Torneio {
     /**
      * REGISTRADOR DE LOG: Captura o estado completo do torneio e da UI
      */
-public function registrarLogEstado($id_torneio, $acao) {
-    try {
-        $partidas = $this->buscarPartidasComNomes($id_torneio);
-        $rodadaAtiva = $this->buscarRodadaAtual($id_torneio);
+	public function registrarLogEstado($id_torneio, $acao) {
+		try {
+			$partidas = $this->buscarPartidasComNomes($id_torneio);
+			$rodadaAtiva = $this->buscarRodadaAtual($id_torneio);
 
-        $snapshot = [
-            'info_torneio' => [
-                'rodada_ativa_numero' => $rodadaAtiva['numero_rodada'] ?? 'N/A',
-                'rodada_ativa_chave'  => $rodadaAtiva['tipo_chave'] ?? 'N/A'
-            ],
-            'pareamentos' => []
-        ];
+			$snapshot = [
+				'info_torneio' => [
+					'rodada_ativa_numero' => $rodadaAtiva['numero_rodada'] ?? 'N/A',
+					'rodada_ativa_chave'  => $rodadaAtiva['tipo_chave'] ?? 'N/A'
+				],
+				'pareamentos' => []
+			];
 
-        if ($partidas) {
-            foreach ($partidas as $p) {
-                $rodadaBate = ($p['numero_rodada'] == ($rodadaAtiva['numero_rodada'] ?? 0));
-                $chaveBate  = ($p['tipo_chave'] == ($rodadaAtiva['tipo_chave'] ?? ''));
-                $semVencedor = empty($p['vencedor_id']);
-                $temJogador  = !empty($p['id_jogador1']) || !empty($p['id_jogador2']);
+			if ($partidas) {
+				foreach ($partidas as $p) {
+					$rodadaBate = ($p['numero_rodada'] == ($rodadaAtiva['numero_rodada'] ?? 0));
+					$chaveBate  = ($p['tipo_chave'] == ($rodadaAtiva['tipo_chave'] ?? ''));
+					$semVencedor = empty($p['vencedor_id']);
+					$temJogador  = !empty($p['id_jogador1']) || !empty($p['id_jogador2']);
 
-                $snapshot['pareamentos'][] = [
-                    'id' => $p['id_partida'],
-                    'ch' => $p['tipo_chave'],
-                    'rd' => $p['numero_rodada'],
-                    'ui' => ($rodadaBate && $chaveBate && $semVencedor && $temJogador) ? 'BOTÃO' : 'NÃO',
-                    'p1' => $p['nome_j1'] ?? 'TBD',
-                    'p2' => $p['nome_j2'] ?? 'TBD',
-                    'v'  => $p['vencedor_id'] ?? '-'
-                ];
-            }
-        }
+					$snapshot['pareamentos'][] = [
+						'id' => $p['id_partida'],
+						'ch' => $p['tipo_chave'],
+						'rd' => $p['numero_rodada'],
+						'ui' => ($rodadaBate && $chaveBate && $semVencedor && $temJogador) ? 'BOTÃO' : 'NÃO',
+						'p1' => $p['nome_j1'] ?? 'TBD',
+						'p2' => $p['nome_j2'] ?? 'TBD',
+						'v'  => $p['vencedor_id'] ?? '-'
+					];
+				}
+			}
 
-        // JSON_UNESCAPED_UNICODE evita problemas com acentos (ex: Marta Nobre Maciel)
-        $detalhesJson = json_encode($snapshot, JSON_UNESCAPED_UNICODE);
+			// JSON_UNESCAPED_UNICODE evita problemas com acentos (ex: Marta Nobre Maciel)
+			$detalhesJson = json_encode($snapshot, JSON_UNESCAPED_UNICODE);
 
-        $sql = "INSERT INTO torneio_debug_logs (id_torneio, acao, detalhes) VALUES (?, ?, ?)";
-        $stmt = $this->db->prepare($sql);
-        $executou = $stmt->execute([$id_torneio, $acao, $detalhesJson]);
+			$sql = "INSERT INTO torneio_debug_logs (id_torneio, acao, detalhes) VALUES (?, ?, ?)";
+			$stmt = $this->db->prepare($sql);
+			$executou = $stmt->execute([$id_torneio, $acao, $detalhesJson]);
 
-        if (!$executou) {
-            // Se não salvou, escreve o erro no log do PHP do servidor
-            error_log("ERRO SQL LOG: " . implode(" - ", $stmt->errorInfo()));
-        }
+			if (!$executou) {
+				// Se não salvou, escreve o erro no log do PHP do servidor
+				error_log("ERRO SQL LOG: " . implode(" - ", $stmt->errorInfo()));
+			}
 
-    } catch (Exception $e) {
-        error_log("ERRO EXCEPTION LOG: " . $e->getMessage());
+		} catch (Exception $e) {
+			error_log("ERRO EXCEPTION LOG: " . $e->getMessage());
+		}
     }
-}
+
+	public function definirVencedor($id_partida, $resultado) {
+		// Agora o método buscarPartida existe e não dará mais erro
+		$partida = $this->buscarPartida($id_partida);
+
+		if (!$partida) return false;
+
+		// Identifica o ID do vencedor com base no botão clicado na View
+		$vencedor_id = (strpos($resultado, 'jogador1') !== false) ? $partida['id_jogador1'] : $partida['id_jogador2'];
+
+		$sql = "UPDATE torneio_partidas SET resultado = ?, vencedor_id = ? WHERE id_partida = ?";
+		$stmt = $this->db->prepare($sql);
+		return $stmt->execute([$resultado, $vencedor_id, $id_partida]);
+	}
+
+	public function buscarPartida($id_partida) {
+		$sql = "SELECT id_partida, id_jogador1, id_jogador2, id_rodada FROM torneio_partidas WHERE id_partida = ?";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$id_partida]);
+		return $stmt->fetch(PDO::FETCH_ASSOC);
+	}
+
+
 }

@@ -1,5 +1,9 @@
 <style>
+/* Estilização de Impressão e UI */
 #print-area { display: none; }
+.tracking-wider { letter-spacing: 1px; }
+.kpi-card { transition: transform 0.2s; border-left: 4px solid; }
+.kpi-card:hover { transform: translateY(-3px); }
 
 @media print {
     @page { margin: 1cm; size: auto; }
@@ -9,193 +13,166 @@
     #print-area {
         display: block !important;
         position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        page-break-after: avoid !important;
+        left: 0; top: 0; width: 100%;
     }
-    .p-4, div { max-height: none !important; overflow: visible !important; height: auto !important; }
-    .modal-backdrop, .modal { display: none !important; }
 }
 </style>
 
 <?php
-// Função para máscara de telefone
 function mascaraTelefone($numero) {
     $n = preg_replace('/\D/', '', $numero);
-    if (strlen($n) === 11) {
-        return "(" . substr($n, 0, 2) . ") " . substr($n, 2, 5) . "-" . substr($n, 7);
-    } elseif (strlen($n) === 10) {
-        return "(" . substr($n, 0, 2) . ") " . substr($n, 2, 4) . "-" . substr($n, 6);
-    }
+    if (strlen($n) === 11) return "(" . substr($n, 0, 2) . ") " . substr($n, 2, 5) . "-" . substr($n, 7);
+    if (strlen($n) === 10) return "(" . substr($n, 0, 2) . ") " . substr($n, 2, 4) . "-" . substr($n, 6);
     return $numero;
 }
-
-// O $base já vem do seu Header.php como rtrim($this->baseUrl, '/') . '/';
 ?>
 
-<div class="row">
-  <div class="col-md-6">
-    <div class="card mb-4 bg-dark text-light border-danger">
-      <div class="card-header bg-danger text-white">
-        👥 Clientes Inativos (mais de 2 meses)
-      </div>
-      <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-dark table-striped table-bordered align-middle">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Telefone</th>
-                  <th>Última Compra</th>
-                  <th>Total Gasto</th>
-                  <th>Ação</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php if (!empty($clientesInativos)): ?>
-                  <?php foreach ($clientesInativos as $cliente): ?>
-                    <tr>
-                      <td><?= htmlspecialchars($cliente['nome']) ?></td>
-                      <td><?= !empty($cliente['telefone']) ? mascaraTelefone($cliente['telefone']) : '<span class="text-muted">Sem fone</span>' ?></td>
-                      <td><?= $cliente['ultima_compra'] ? date('d/m/Y', strtotime($cliente['ultima_compra'])) : 'Nunca' ?></td>
-                      <td>R$ <?= number_format($cliente['total_gasto'], 2, ',', '.') ?></td>
-                      <td>
-                        <?php if (!empty($cliente['telefone'])): ?>
-                          <a href="https://wa.me/55<?= preg_replace('/\D/', '', $cliente['telefone']) ?>?text=Olá%20<?= urlencode($cliente['nome']) ?>,%20vimos%20que%20faz%20tempo%20que%20não%20nos%20visita!"
-                               target="_blank" class="btn btn-success btn-sm">WhatsApp</a>
-                        <?php endif; ?>
-                      </td>
-                    </tr>
-                  <?php endforeach; ?>
-                <?php else: ?>
-                  <tr><td colspan="5" class="text-center">Nenhum inativo.</td></tr>
-                <?php endif; ?>
-              </tbody>
-            </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-6">
-    <div class="card mb-4 bg-dark text-light border-primary">
-        <div class="card-header bg-primary text-white">
-            📅 Informações do Contrato
-        </div>
-        <div class="card-body">
-            <p><strong>Número do Contrato:</strong>
-                <span class="badge bg-info text-dark">
-                    <?= (!empty($contratoAtivo['numero_contrato'])) ? $contratoAtivo['numero_contrato'] : 'Nº não cadastrado' ?>
-                </span>
-            </p>
-            <hr>
-
-            <?php if (!empty($contratoAtivo['id_contrato'])): ?>
-                <button class="btn btn-outline-primary btn-sm" onclick="abrirContratoLogado()">
-                    <i class="bi bi-file-earmark-text"></i> Visualizar Meu Contrato
-                </button>
-                <hr>
-                <p><strong>Status:</strong>
-                    <span class="text-success">Contrato Ativo</span>
-                </p>
-            <?php else: ?>
-                <p class="text-warning">Sem contrato ativo no sistema</p>
-            <?php endif; ?>
-        </div>
-    </div>
-    <div class="card mb-4 bg-dark text-light border-secondary">
-      <div class="card-header bg-secondary text-white">
-        ⚙️ Configurações do Usuário
-      </div>
-      <div class="card-body">
-        <div class="d-flex gap-2">
-            <a href="<?= $base ?>usuario/alterar-senha" class="btn btn-outline-light btn-sm">Alterar Senha</a>
-            <a href="<?= $base ?>usuario/editar-dados" class="btn btn-outline-info btn-sm">Atualizar Dados</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row">
-  <div class="col-md-12">
-    <div class="card mb-4 bg-dark text-light border-success">
-      <div class="card-header bg-success text-white">
-        📊 Resumo do Dia
-      </div>
-      <div class="card-body">
-        <div class="row text-center">
-            <div class="col-md-4 border-end border-secondary mb-3 mb-md-0">
-                <small class="text-light d-block mb-1 opacity-75">Pedidos Hoje</small>
-                <span class="h4 fw-bold text-white"><?= $resumoDia['pedidos'] ?? 0 ?></span>
-            </div>
-            <div class="col-md-4 border-end border-secondary mb-3 mb-md-0">
-                <small class="text-light d-block mb-1 opacity-75">Total Vendido</small>
-                <span class="h4 fw-bold text-success">R$ <?= number_format($resumoDia['total_vendido'] ?? 0, 2, ',', '.') ?></span>
-            </div>
-            <div class="col-md-4">
-                <small class="text-light d-block mb-1 opacity-75">Produto Mais Vendido</small>
-                <span class="h4 fw-bold text-info"><?= htmlspecialchars($resumoDia['produto_top'] ?? '---') ?></span>
-            </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row">
-  <div class="col-md-12">
-    <div class="card mb-4 bg-dark text-light border-warning">
-      <div class="card-header bg-warning text-light fw-bold">
-        ⚠️ Alertas do Sistema
-      </div>
-      <div class="card-body">
-        <div class="row">
-            <div class="col-md-4 mb-2">
-                <div class="d-flex justify-content-between align-items-center p-2 border border-secondary rounded">
-                    <span>Estoque Baixo</span>
-                    <span class="badge <?= ($alertas['estoque_baixo'] ?? 0) > 0 ? 'bg-danger' : 'bg-secondary' ?> rounded-pill">
-                        <?= $alertas['estoque_baixo'] ?? 0 ?>
-                    </span>
-                </div>
-            </div>
-            <div class="col-md-4 mb-2">
-                <div class="d-flex justify-content-between align-items-center p-2 border border-secondary rounded">
-                    <span>Pagamentos Pendentes</span>
-                    <span class="badge <?= ($alertas['pendencias'] ?? 0) > 0 ? 'bg-warning text-dark' : 'bg-secondary' ?> rounded-pill">
-                        <?= $alertas['pendencias'] ?? 0 ?>
-                    </span>
-                </div>
-            </div>
-            <div class="col-md-4 mb-2">
-                <div class="d-flex justify-content-between align-items-center p-2 border border-secondary rounded">
-                    <span>Contratos a Vencer (30 dias)</span>
-                    <span class="badge <?= ($alertas['contratos_vencendo'] ?? 0) > 0 ? 'bg-info text-dark' : 'bg-secondary' ?> rounded-pill">
-                        <?= $alertas['contratos_vencendo'] ?? 0 ?>
-                    </span>
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="card bg-dark border-secondary kpi-card shadow-sm h-100" style="border-left-color: #0d6efd !important;">
+                <div class="card-body">
+                    <small class="text-white-50 text-uppercase tracking-wider fw-bold">Pedidos Hoje</small>
+                    <div class="d-flex align-items-center mt-2">
+                        <h2 class="mb-0 fw-bold text-white"><?= $resumoDia['pedidos'] ?? 0 ?></h2>
+                        <i class="bi bi-cart-check ms-auto text-primary fs-3"></i>
+                    </div>
                 </div>
             </div>
         </div>
-      </div>
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="card bg-dark border-secondary kpi-card shadow-sm h-100" style="border-left-color: #198754 !important;">
+                <div class="card-body">
+                    <small class="text-white-50 text-uppercase tracking-wider fw-bold">Total Vendido</small>
+                    <div class="d-flex align-items-center mt-2">
+                        <h2 class="mb-0 fw-bold text-success">R$ <?= number_format($resumoDia['total_vendido'] ?? 0, 2, ',', '.') ?></h2>
+                        <i class="bi bi-cash-stack ms-auto text-success fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary kpi-card shadow-sm h-100" style="border-left-color: #0dcaf0 !important;">
+                <div class="card-body">
+                    <small class="text-white-50 text-uppercase tracking-wider fw-bold">Top Produto</small>
+                    <div class="d-flex align-items-center mt-2">
+                        <h2 class="mb-0 fs-5 fw-bold text-info text-truncate"><?= htmlspecialchars($resumoDia['produto_top'] ?? '---') ?></h2>
+                        <i class="bi bi-star ms-auto text-info fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
+
+    <div class="row">
+        <div class="col-lg-7 mb-4">
+            <div class="card bg-dark border-secondary shadow-sm h-100">
+                <div class="card-header bg-transparent border-secondary py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="text-danger fw-bold mb-0 text-uppercase tracking-wider">
+                        <i class="bi bi-person-x me-2"></i> Clientes Inativos (+2 meses)
+                    </h6>
+                    <span class="badge bg-danger rounded-pill"><?= count($clientesInativos) ?></span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0 align-middle">
+                            <thead>
+                                <tr class="text-white-50 small border-secondary">
+                                    <th class="ps-3 border-0">Nome</th>
+                                    <th class="border-0">Última Visita</th>
+                                    <th class="border-0">Gasto Total</th>
+                                    <th class="text-end pe-3 border-0">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($clientesInativos)): ?>
+                                    <?php foreach ($clientesInativos as $cliente): ?>
+                                        <tr class="border-secondary">
+                                            <td class="ps-3 fw-bold"><?= htmlspecialchars($cliente['nome']) ?></td>
+                                            <td class="small text-white-50"><?= $cliente['ultima_compra'] ? date('d/m/Y', strtotime($cliente['ultima_compra'])) : 'Nunca' ?></td>
+                                            <td class="text-white">R$ <?= number_format($cliente['total_gasto'], 2, ',', '.') ?></td>
+                                            <td class="text-end pe-3">
+                                                <?php if (!empty($cliente['telefone'])): ?>
+                                                    <a href="https://wa.me/55<?= preg_replace('/\D/', '', $cliente['telefone']) ?>?text=Olá%20<?= urlencode($cliente['nome']) ?>,%20vimos%20que%20faz%20tempo%20que%20não%20nos%20visita!"
+                                                       target="_blank" class="btn btn-success btn-sm rounded-pill px-3">
+                                                        <i class="bi bi-whatsapp"></i>
+                                                    </a>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr><td colspan="4" class="text-center py-4 text-white-50">Tudo em dia! Nenhum inativo.</td></tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card bg-dark border-secondary shadow-sm mb-4">
+                <div class="card-header bg-transparent border-secondary py-3 text-warning fw-bold text-uppercase tracking-wider small">
+                    <i class="bi bi-exclamation-triangle me-2"></i> Alertas do Sistema
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush bg-transparent">
+                        <div class="list-group-item bg-transparent border-secondary d-flex justify-content-between align-items-center px-0">
+                            <span class="text-white-50">Estoque Baixo</span>
+                            <span class="badge <?= ($alertas['estoque_baixo'] ?? 0) > 0 ? 'bg-danger' : 'bg-secondary' ?> rounded-pill"><?= $alertas['estoque_baixo'] ?? 0 ?></span>
+                        </div>
+                        <div class="list-group-item bg-transparent border-secondary d-flex justify-content-between align-items-center px-0">
+                            <span class="text-white-50">Pagamentos Pendentes</span>
+                            <span class="badge <?= ($alertas['pendencias'] ?? 0) > 0 ? 'bg-warning text-dark' : 'bg-secondary' ?> rounded-pill"><?= $alertas['pendencias'] ?? 0 ?></span>
+                        </div>
+                        <div class="list-group-item bg-transparent border-0 d-flex justify-content-between align-items-center px-0">
+                            <span class="text-white-50">Contratos a Vencer</span>
+                            <span class="badge <?= ($alertas['contratos_vencendo'] ?? 0) > 0 ? 'bg-info text-dark' : 'bg-secondary' ?> rounded-pill"><?= $alertas['contratos_vencendo'] ?? 0 ?></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary shadow-sm mb-4">
+                <div class="card-header bg-transparent border-secondary py-3 text-primary fw-bold text-uppercase tracking-wider small">
+                    <i class="bi bi-shield-check me-2"></i> Licença ManaBank
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <i class="bi bi-file-earmark-text text-white-50 fs-2"></i>
+                        </div>
+                        <div>
+                            <p class="mb-0 text-white small">Nº Contrato: <strong><?= (!empty($contratoAtivo['numero_contrato'])) ? $contratoAtivo['numero_contrato'] : '---' ?></strong></p>
+                            <span class="badge bg-success-subtle text-success border border-success px-2 py-1 small" style="font-size: 0.7rem;">ATIVO</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm w-100 fw-bold" onclick="abrirContratoLogado()">
+                        VISUALIZAR DOCUMENTO
+                    </button>
+                </div>
+                <div class="card-footer bg-transparent border-secondary py-2 d-flex justify-content-between">
+                    <a href="<?= $base ?>usuario/alterar-senha" class="text-white-50 small text-decoration-none hover-white"><i class="bi bi-key me-1"></i> Senha</a>
+                    <a href="<?= $base ?>usuario/editar-dados" class="text-white-50 small text-decoration-none hover-white"><i class="bi bi-person-gear me-1"></i> Perfil</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="print-area"></div>
-
 <div class="modal fade" id="contratoModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title fw-bold text-dark">Meu Contrato de Licença</h5>
+        <div class="modal-content border-0 shadow-lg bg-light">
+            <div class="modal-header border-0 pb-0">
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body p-4" id="conteudoContrato"></div>
-            <div class="modal-footer bg-light d-print-none">
+            <div class="modal-footer border-0 d-print-none">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                 <button type="button" class="btn btn-primary" onclick="imprimirContrato()">
-                    <i class="bi bi-printer"></i> Imprimir
+                    <i class="bi bi-printer me-2"></i> Imprimir Contrato
                 </button>
             </div>
         </div>
@@ -203,7 +180,6 @@ function mascaraTelefone($numero) {
 </div>
 
 <script>
-// Usando as variáveis injetadas pelo Controller e Header.php
 window.minhaLoja = <?= json_encode($dadosDaLoja ?? []) ?>;
 window.meuContrato = <?= json_encode($contratoAtivo ?? []) ?>;
 
@@ -212,78 +188,64 @@ window.abrirContratoLogado = function() {
     const contrato = window.meuContrato;
     const base = window.BASE_URL;
 
-    if (!loja || Object.keys(loja).length === 0) {
-        alert("Dados da loja não carregados.");
-        return;
-    }
+    if (!loja || !contrato) return alert("Erro ao carregar dados.");
 
     const numeroContrato = contrato.numero_contrato || `CT-${(contrato.id_contrato || 0).toString().padStart(4, '0')}`;
     const dataIni = contrato.data_inicio ? new Date(contrato.data_inicio).toLocaleDateString('pt-BR') : '---';
     const dataFim = contrato.data_fim ? new Date(contrato.data_fim).toLocaleDateString('pt-BR') : '---';
 
-    // Montagem robusta da URL da Logo
+    // Definição da URL do Logo ou placeholder caso não exista
     const logoUrl = (loja.logo && loja.id_loja)
         ? `${base}public/storage/uploads/lojas/${loja.id_loja}/${loja.logo}`
-        : '';
+        : `${base}public/assets/img/placeholder-loja.png`;
 
     const html = `
-        <div class="text-dark secao-impressao">
-            <div class="d-flex justify-content-between align-items-start mb-4">
-                <div>
-                    <h4 class="mb-0 fw-bold text-dark">ManaBank / TCG Balcão</h4>
-                    <p class="text-muted small">Nº do Contrato: <strong>${numeroContrato}</strong></p>
+        <div class="text-dark">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="d-flex align-items-center">
+                    <img src="${logoUrl}" alt="Logo ${loja.nome_loja}" class="rounded me-3 border shadow-sm" style="width: 50px; height: 50px; object-fit: cover;">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">${loja.nome_loja}</h5>
+                        <p class="text-muted small mb-0">Licença de Uso: <span class="badge bg-secondary text-uppercase">${contrato.tipo || 'Padrão'}</span></p>
+                    </div>
                 </div>
-                ${logoUrl ? `<img src="${logoUrl}" style="height:50px; border:1px solid #dee2e6; padding:5px; border-radius:5px; background: white;" onerror="this.style.display='none'">` : ''}
-            </div>
-
-            <div class="row mb-4">
-                <div class="col-sm-6 text-dark">
-                    <p class="mb-1 small text-muted text-uppercase fw-bold">Contratante</p>
-                    <p class="fw-bold mb-0 text-dark">${loja.nome_loja || 'Não identificado'}</p>
-                    <p class="small mb-0 text-secondary">CNPJ: ${loja.cnpj || 'Não informado'}</p>
-                </div>
-                <div class="col-sm-6 text-sm-end text-dark">
-                    <p class="mb-1 small text-muted text-uppercase fw-bold">Vigência</p>
-                    <p class="fw-bold mb-0 text-primary">${dataIni} até ${dataFim}</p>
-                    <p class="small mb-0 text-secondary">Plano: ${(contrato.tipo || '---').toUpperCase()}</p>
+                <div class="text-end">
+                    <h4 class="fw-bold mb-0 text-dark">MANABANK</h4>
+                    <p class="text-muted small mb-0">Gestão de TCG</p>
                 </div>
             </div>
 
-            <hr class="border-secondary opacity-25">
+            <hr class="mt-0 mb-4">
 
-            <div class="p-4 border rounded shadow-sm"
-                 style="background-color: #fdfdfd; color: #333; font-size: 0.95rem; max-height: 400px; overflow-y: auto; line-height: 1.6;">
-
-                <h6 class="fw-bold text-center mb-4 text-dark text-uppercase" style="border-bottom: 2px solid #eee; padding-bottom: 10px;">
-                    Contrato de Licença de Uso de Software
-                </h6>
-
-                <p>Este documento estabelece os termos de uso do sistema <strong>TCG BALCÃO</strong> pela contratante <strong>${loja.nome_loja || '---'}</strong>.</p>
-                <p><strong>1. Objeto:</strong> Licença de uso temporário de software de gestão comercial (SaaS) especializado em Trading Card Games.</p>
-                <p><strong>2. Suporte:</strong> A ManaBank garante suporte técnico para correção de falhas e atualizações de segurança.</p>
-                <p><strong>3. Vencimento:</strong> O acesso será interrompido em caso de não renovação após o dia <strong>${dataFim}</strong>.</p>
-
-                <div class="mt-5 text-center">
-                    <div style="border-top: 1px solid #ccc; width: 250px; margin: 0 auto;"></div>
-                    <p class="text-muted small mt-1">Assinatura Digital - Validado via Sistema ManaBank em <?= date('d/m/Y') ?></p>
+            <div class="row mb-4 bg-white p-3 rounded border mx-0 shadow-sm">
+                <div class="col-6 border-end">
+                    <p class="mb-0 small text-muted">CONTRATANTE</p>
+                    <p class="fw-bold mb-0">${loja.nome_loja}</p>
+                    <p class="small text-muted mb-0">CNPJ: ${loja.cnpj || '---'}</p>
                 </div>
+                <div class="col-6 text-end">
+                    <p class="mb-0 small text-muted">VIGÊNCIA DO PLANO</p>
+                    <p class="fw-bold mb-0 text-primary">${dataIni} - ${dataFim}</p>
+                    <p class="small text-muted mb-0">Contrato: ${numeroContrato}</p>
+                </div>
+            </div>
+
+            <div class="p-3 border rounded bg-light small shadow-inner" style="line-height:1.6; max-height:300px; overflow-y:auto; border-left: 4px solid #0d6efd !important;">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-file-earmark-text me-2"></i>TERMOS DE USO (SaaS)</h6>
+                <p>1. <strong>Objeto:</strong> O presente instrumento regula o licenciamento de uso do software <strong>MANABANK</strong> para gestão balcão de lojas de TCG que ofertam cartas (MTG, Pokémon, Yu-Gi-Oh!), controle de PDV e gestão de comunidades.</p>
+                <p>2. <strong>Propriedade:</strong> Todo o código-fonte, marcas e propriedade intelectual pertencem exclusivamente ao ecossistema ManaBank.</p>
+                <p>3. <strong>Vencimento:</strong> Esta licença de uso é válida impreterivelmente até <strong>${dataFim}</strong>, sujeita a renovação conforme o tipo de contrato: <u>${contrato.tipo || 'Padrão'}</u>.</p>
+                <p>4. <strong>Suporte:</strong> O suporte técnico é oferecido via canais oficiais de desenvolvedor para garantir a integridade do banco de dados MySQL.</p>
             </div>
         </div>
     `;
 
     document.getElementById('conteudoContrato').innerHTML = html;
-    const myModal = new bootstrap.Modal(document.getElementById('contratoModal'));
-    myModal.show();
+    new bootstrap.Modal(document.getElementById('contratoModal')).show();
 }
 
 window.imprimirContrato = function() {
-    const conteudo = document.getElementById('conteudoContrato').innerHTML;
-    const printArea = document.getElementById('print-area');
-    printArea.innerHTML = conteudo.trim();
-
-    setTimeout(() => {
-        window.print();
-        printArea.innerHTML = '';
-    }, 250);
+    document.getElementById('print-area').innerHTML = document.getElementById('conteudoContrato').innerHTML;
+    window.print();
 }
 </script>

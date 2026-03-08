@@ -8,59 +8,52 @@ class TorneioeliminacaoController extends Controller {
         $this->db = Database::getInstance();
     }
 
-    public function gerenciar($id_torneio) {
-        AuthMiddleware::verificarLogin();
-        $model = new TorneioEliminacao();
-        $torneio = $model->buscarTorneio($id_torneio);
+	public function gerenciar($id_torneio) {
+		AuthMiddleware::verificarLogin();
+		$model = new TorneioEliminacao();
+		$torneio = $model->buscarTorneio($id_torneio);
 
-        if (!$torneio) {
-            header("Location: " . $this->baseUrl . "torneio?erro=nao_encontrado");
-            exit;
-        }
+		if (!$torneio) {
+			header("Location: " . $this->baseUrl . "torneio?erro=nao_encontrado");
+			exit;
+		}
 
-        $stmtCheck = $this->db->prepare("SELECT COUNT(*) FROM torneio_rodadas WHERE id_torneio = ?");
-        $stmtCheck->execute([$id_torneio]);
-        if ($stmtCheck->fetchColumn() == 0) {
-            $model->iniciarTorneio($id_torneio);
-        }
+		// Inicialização automática das rodadas se necessário
+		$stmtCheck = $this->db->prepare("SELECT COUNT(*) FROM torneio_rodadas WHERE id_torneio = ?");
+		$stmtCheck->execute([$id_torneio]);
+		if ($stmtCheck->fetchColumn() == 0) {
+			$model->iniciarTorneio($id_torneio);
+		}
 
-        $rodadaAtiva = $model->buscarRodadaAtual($id_torneio);
+		// Busca a rodada ativa (WB ou LB)
+		$rodadaAtual = $model->buscarRodadaAtual($id_torneio);
 
-        $sql = "SELECT p.*, r.numero_rodada, r.tipo_chave, r.status, c1.nome as nome_j1, c2.nome as nome_j2
-                FROM torneio_rodadas r
-                LEFT JOIN torneio_partidas p ON r.id_rodada = p.id_rodada
-                LEFT JOIN clientes c1 ON p.id_jogador1 = c1.id_cliente
-                LEFT JOIN clientes c2 ON p.id_jogador2 = c2.id_cliente
-                WHERE r.id_torneio = ?
-                ORDER BY r.numero_rodada ASC, r.tipo_chave DESC, p.id_partida ASC";
+		// SQL que traz os dados limpando NULLs para o PHP 8.1
+		$sql = "SELECT p.*, r.numero_rodada, r.tipo_chave, r.status,
+					   COALESCE(c1.nome, 'TBD') as nome_j1,
+					   COALESCE(c2.nome, NULL) as nome_j2
+				FROM torneio_rodadas r
+				LEFT JOIN torneio_partidas p ON r.id_rodada = p.id_rodada
+				LEFT JOIN clientes c1 ON p.id_jogador1 = c1.id_cliente
+				LEFT JOIN clientes c2 ON p.id_jogador2 = c2.id_cliente
+				WHERE r.id_torneio = ?
+				ORDER BY r.numero_rodada ASC, r.tipo_chave DESC, p.id_partida ASC";
 
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$id_torneio]);
-        $partidas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$id_torneio]);
+		$partidas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $model->registrarLogEstado($id_torneio, "VIEW_LOAD");
+		$model->registrarLogEstado($id_torneio, "VIEW_LOAD");
 
-        $this->view('torneio/gerenciarTorneioEliminacao', [
-            'torneio' => $torneio,
-            'rodadaAtual' => $rodadaAtiva ?: ['numero_rodada' => 1, 'tipo_chave' => 'WB'],
-            'partidas' => $partidas,
-            'id_torneio' => $id_torneio
-        ]);
-    }
-
-    public function salvarResultado() {
-        $model = new TorneioEliminacao();
-        $id_partida = $_POST['id_partida'];
-        $id_torneio = $_POST['id_torneio'];
-        $resultado = $_POST['resultado'];
-
-        $model->processarResultado($id_partida, $resultado);
-        $model->registrarLogEstado($id_torneio, "RESULTADO_SALVO_PARTIDA_{$id_partida}");
-
-        // REFATORADO: Redirecionamento dinâmico
-        header("Location: " . $this->baseUrl . "TorneioEliminacao/gerenciar/" . $id_torneio);
-        exit;
-    }
+		// Passando EXATAMENTE as variáveis que o código do Git exige
+		$this->view('torneio/gerenciarTorneioEliminacao', [
+			'torneio'     => $torneio,
+			'rodadaAtual' => $rodadaAtual,
+			'partidas'    => $partidas,
+			'id_torneio'  => $id_torneio,
+			'base'        => $this->baseUrl // Necessário para a função renderChallongeGame
+		]);
+	}
 
     public function avancarRodada() {
         $model = new TorneioEliminacao();
@@ -239,4 +232,32 @@ class TorneioeliminacaoController extends Controller {
             $this->db->prepare("UPDATE torneio_partidas SET $coluna = ? WHERE id_partida = ?")->execute([$jogador_id, $id_gf]);
         }
     }
+
+ 	public function salvarResultado() {
+		AuthMiddleware::verificarLogin();
+
+		// Recebe os dados do formulário da View
+		$id_partida = $_POST['id_partida'] ?? null;
+		$id_torneio = $_POST['id_torneio'] ?? null;
+		$resultado  = $_POST['resultado'] ?? null;
+
+		if ($id_partida && $resultado) {
+			$model = new TorneioEliminacao();
+
+			// Chama o método do Model para gravar no banco
+			// Certifique-se de que seu Model tem a função definirVencedor ou salvarResultado
+			$sucesso = $model->definirVencedor($id_partida, $resultado);
+
+			if ($sucesso) {
+				header("Location: " . $this->baseUrl . "TorneioEliminacao/gerenciar/" . $id_torneio . "?sucesso=resultado_salvo");
+				exit;
+			}
+		}
+
+		// Se algo der errado, volta com erro
+		header("Location: " . $this->baseUrl . "TorneioEliminacao/gerenciar/" . $id_torneio . "?erro=falha_ao_salvar");
+		exit;
+	}
+
+
 }

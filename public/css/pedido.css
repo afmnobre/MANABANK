@@ -1,21 +1,4 @@
-/* --- ESTILOS GERAIS E CALENDÁRIO --- */
-.main-content {
-    margin: 80px 40px 0 40px;
-}
-
-.has-pedido {
-    background-color: #ff4d4d !important;
-    color: #fff !important;
-    border-radius: 50%;
-}
-
-/* --- ALERTAS E ESTOQUE --- */
-.estoque-alerta {
-    background-color: #ff0000;
-    font-weight: bold;
-    border: 2px solid #ff9900;
-}
-
+/* --- ESTOQUE E STATUS --- */
 .estoque-alerta-vivo {
     background-color: #ff0000 !important;
     color: #ffffff !important;
@@ -29,9 +12,9 @@
 }
 
 .total-pago {
-    background-color: #00ff00;
+    background-color: #28a745;
     font-weight: bold;
-    color: #000;
+    color: #fff;
 }
 
 /* --- ANIMAÇÃO DE ALERTA --- */
@@ -46,7 +29,6 @@
     padding: 20px 30px;
     font-size: 20px;
     font-weight: bold;
-    text-align: center;
     z-index: 9999;
     animation: blinkBorder 1s infinite;
 }
@@ -56,58 +38,39 @@
     50% { border-color: transparent; }
 }
 
-/* --- GRID DE CARTAS --- */
-.cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 60px);
-    gap: 14px;
-    justify-content: flex-start;
-}
-
-/* --- COMPONENTE MAGIC CARD --- */
+/* --- COMPONENTE MAGIC CARD (Filtros) --- */
 .magic-card {
-    position: relative; /* Necessário para o posicionamento absoluto da imagem e overlay */
-    width: 60px;
-    height: 85px;
-    flex: 0 0 60px;
+    position: relative;
+    width: 80px;  /* Largura ajustada para o filtro horizontal */
+    height: 45px; /* Altura para não espremer a imagem */
+    flex: 0 0 80px;
     cursor: pointer;
     display: block;
     overflow: hidden;
-    border-radius: 8px;
+    border-radius: 6px;
     border: 2px solid #444;
     transition: all 0.2s ease;
+    background-color: #1a1a1a;
 }
 
-/* Isso garante que a imagem ocupe TODO o espaço do label */
+/* Imagem preenchendo o Card sem distorcer */
 .magic-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Preenche o espaço cortando sobras, sem deformar */
-    display: block;
-    filter: grayscale(40%);
-    transition: filter 0.2s ease;
-    position: absolute; /* Adicionado para garantir que fique atrás do overlay */
+    position: absolute;
     top: 0;
     left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Chave para não ficar espremida */
+    filter: grayscale(60%);
+    transition: all 0.3s ease;
 }
 
 .magic-card:hover {
-    transform: scale(1.08) rotateZ(-1deg);
-    z-index: 10;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.8);
+    transform: translateY(-2px);
+    border-color: #666;
 }
 
-/* Moldura interna estilo carta */
-.magic-card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 6px;
-    box-shadow: inset 0 0 0 2px rgba(0,0,0,0.5);
-    pointer-events: none;
-}
-
-/* --- ESTADO SELECIONADO (CHECKED) --- */
+/* Checkbox Invisível dentro do Card */
 .magic-check {
     position: absolute;
     opacity: 0;
@@ -116,34 +79,44 @@
     pointer-events: none;
 }
 
-/* Quando o checkbox dentro do card está marcado */
+/* Estado Selecionado */
 .magic-card:has(.magic-check:checked) {
-    border: 3px solid #28a745 !important; /* Verde Sucesso */
-    transform: scale(1.05);
-    z-index: 9;
-    box-shadow: 0 0 15px rgba(40, 167, 69, 0.6);
+    border: 2px solid #0d6efd !important;
+    box-shadow: 0 0 10px rgba(13, 110, 253, 0.4);
 }
 
 .magic-card:has(.magic-check:checked) img {
-    filter: grayscale(0%); /* Ganha cor total */
+    filter: grayscale(0%);
+    transform: scale(1.1);
 }
 
-/* --- OVERLAY DE TEXTO --- */
+/* Overlay de Nome/Filtro */
 .card-overlay {
     position: absolute;
     bottom: 0;
     width: 100%;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.6);
     color: white;
     text-align: center;
-    font-size: 9px;
-    padding: 2px 0;
-    transition: background 0.2s ease;
+    font-size: 10px;
+    padding: 1px 0;
 }
 
 .magic-card:has(.magic-check:checked) .card-overlay {
-    background: rgba(40, 167, 69, 0.9); /* Overlay fica verde se selecionado */
+    background: rgba(13, 110, 253, 0.8);
     font-weight: bold;
 }
 
+/* Custom Scrollbar para os Filtros */
+.custom-scroll::-webkit-scrollbar {
+    display: none;
+}
+.custom-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
 
+/* No pedido.css da View Index de Pedidos */
+.main-content {
+    padding-bottom: 120px !important; /* Abre um espaço extra no fim da página para o footer não sumir */
+}

@@ -1,83 +1,145 @@
 <?php if (!empty($_SESSION['flash'])): ?>
-  <div class="alert alert-success alert-dismissible fade show" role="alert">
-    <?= htmlspecialchars($_SESSION['flash']) ?>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
-  </div>
-  <?php unset($_SESSION['flash']); ?>
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> <?= htmlspecialchars($_SESSION['flash']) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+    <?php unset($_SESSION['flash']); ?>
 <?php endif; ?>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="text-light">Clientes da Loja</h2>
-  <a href="<?= $this->baseUrl ?>cliente/criar" class="btn btn-primary btn-sm">➕ Novo Cliente</a>
-</div>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-white fw-bold mb-0">
+            <i class="bi bi-people-fill me-2 text-primary"></i> Clientes da Loja
+        </h2>
+        <a href="<?= $this->baseUrl ?>cliente/criar" class="btn btn-primary btn-sm shadow-sm px-3">
+            <i class="bi bi-person-plus-fill me-1"></i> Novo Cliente
+        </a>
+    </div>
 
-<div class="card bg-dark border-secondary mb-3">
-    <div class="card-body p-2">
-        <div class="input-group">
-            <span class="input-group-text bg-dark border-secondary text-light">🔍</span>
-            <input type="text" id="buscaCliente" class="form-control bg-dark text-light border-secondary"
-                   placeholder="Digite o nome do cliente para filtrar...">
+    <div class="card bg-dark border-secondary mb-4 shadow-sm">
+        <div class="card-body p-2">
+            <div class="input-group">
+                <span class="input-group-text bg-transparent border-0 text-muted">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" id="buscaCliente" class="form-control bg-transparent text-white border-0 shadow-none"
+                       placeholder="Filtrar por nome do cliente...">
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-dark border-secondary shadow-sm overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-striped table-hover align-middle mb-0">
+                    <thead>
+                        <tr class="border-secondary">
+                            <th class="ps-4 py-3 text-uppercase tracking-wider small text-white-50">Nome do Cliente</th>
+                            <th class="py-3 text-uppercase tracking-wider small text-white-50">Contato</th>
+                            <th class="py-3 text-uppercase tracking-wider small text-white-50">Interesses</th>
+                            <th class="py-3 text-end pe-4 text-uppercase tracking-wider small text-white-50">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaClientesCorpo">
+                        <?php if (!empty($clientes)): ?>
+                            <?php foreach ($clientes as $cliente): ?>
+                                <tr class="item-cliente border-secondary" data-nome="<?= strtolower(htmlspecialchars($cliente['nome'])) ?>">
+                                    <td class="ps-4">
+                                        <span class="fw-bold text-info">
+                                            <?= htmlspecialchars($cliente['nome']) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="text-white small">
+                                                <i class="bi bi-envelope-at text-muted me-1"></i> <?= htmlspecialchars($cliente['email']) ?>
+                                            </span>
+                                            <span class="text-white-50 small">
+                                                <i class="bi bi-whatsapp text-success me-1"></i> <?= htmlspecialchars($cliente['telefone']) ?>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <?php foreach ($cliente['cardgames'] as $game):
+                                                $urlImagem = $base . "public/storage/uploads/cardgames/" . $game['id_cardgame'] . "/" . $game['imagem_fundo_card'];
+                                            ?>
+                                                <div class="magic-card-mini shadow-sm" title="<?= htmlspecialchars($game['nome']) ?>">
+                                                    <img src="<?= $urlImagem ?>" alt="<?= htmlspecialchars($game['nome']) ?>">
+                                                    <div class="overlay-mini"><?= mb_substr(htmlspecialchars($game['nome']), 0, 3) ?></div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="btn-group shadow-sm">
+                                            <a href="<?= $this->baseUrl ?>cliente/editar/<?= $cliente['id_cliente'] ?>"
+                                               class="btn btn-sm btn-outline-warning" title="Editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="<?= $this->baseUrl ?>cliente/excluir/<?= $cliente['id_cliente'] ?>"
+                                               onclick="return confirm('Tem certeza que deseja excluir este cliente?')"
+                                               class="btn btn-sm btn-outline-danger" title="Excluir">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    <i class="bi bi-people d-block mb-2 opacity-25" style="font-size: 3rem;"></i>
+                                    Nenhum cliente encontrado.
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="table-responsive">
-  <table class="table table-dark table-striped table-hover align-middle">
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>Email</th>
-        <th>Telefone</th>
-        <th>CardGames</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaClientesCorpo">
-      <?php if (!empty($clientes)): ?>
-        <?php foreach ($clientes as $cliente): ?>
-          <tr class="item-cliente" data-nome="<?= strtolower(htmlspecialchars($cliente['nome'])) ?>">
-            <td><?= htmlspecialchars($cliente['nome']) ?></td>
-            <td><?= htmlspecialchars($cliente['email']) ?></td>
-            <td class="telefone-coluna"><?= htmlspecialchars($cliente['telefone']) ?></td>
-			<td>
-				<div class="d-flex flex-wrap gap-1">
-				  <?php foreach ($cliente['cardgames'] as $game):
-					// Usamos a variável $base que já foi criada lá no header.php
-					$urlImagem = $base . "public/storage/uploads/cardgames/" . $game['id_cardgame'] . "/" . $game['imagem_fundo_card'];
-				  ?>
-					<div class="cliente-cardgame-thumb text-center"
-						 title="<?= htmlspecialchars($game['nome']) ?>"
-						 style="background-image: url('<?= $urlImagem ?>');
-								background-size: cover;
-								background-position: center;
-								width: 60px;
-								height: 80px;
-								position: relative;
-								border-radius: 4px;
-								border: 1px solid #444;">
-					  <span class="cliente-cardgame-name bg-dark bg-opacity-75 text-light small px-1"
-							style="position:absolute; bottom:0; left:0; right:0; font-size: 10px;">
-						<?= htmlspecialchars($game['nome']) ?>
-					  </span>
-					</div>
-				  <?php endforeach; ?>
-				</div>
-			</td>             <td>
-              <a href="<?= $this->baseUrl ?>cliente/editar/<?= $cliente['id_cliente'] ?>" class="btn btn-warning btn-sm">✏️ Editar</a>
-              <a href="<?= $this->baseUrl ?>cliente/excluir/<?= $cliente['id_cliente'] ?>"
-                 onclick="return confirm('Tem certeza que deseja excluir este cliente?')"
-                 class="btn btn-danger btn-sm">🗑️ Excluir</a>
-            </td>
-          </tr>
-        <?php endforeach; ?>
-      <?php else: ?>
-        <tr id="semResultados">
-          <td colspan="5" class="text-center text-muted">Nenhum cliente cadastrado ainda.</td>
-        </tr>
-      <?php endif; ?>
-    </tbody>
-  </table>
-</div>
+<style>
+.tracking-wider { letter-spacing: 1px; }
+
+/* Estilo para as miniaturas de CardGames na listagem */
+.magic-card-mini {
+    position: relative;
+    width: 32px;
+    height: 42px;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid #444;
+}
+.magic-card-mini img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.overlay-mini {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    font-size: 5px;
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    text-align: center;
+    text-transform: uppercase;
+    padding: 1px 0;
+}
+
+/* Ajustes de botões da tabela */
+.btn-group .btn-sm {
+    padding: 0.25rem 0.6rem;
+    border-color: #444;
+}
+.btn-group .btn-outline-warning:hover { background-color: #ffc107; color: #000; }
+.btn-group .btn-outline-danger:hover { background-color: #dc3545; color: #fff; }
+
+#buscaCliente:focus { background-color: transparent !important; color: #fff; }
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

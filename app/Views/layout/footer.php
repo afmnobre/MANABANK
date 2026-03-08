@@ -1,13 +1,19 @@
-</div> <br><br>
-
-<footer class="text-light text-center py-1 fixed-bottom shadow-sm" style="background-color: <?= htmlspecialchars($corTema) ?>; border-top: 1px solid rgba(255,255,255,0.1);">
+</div> <footer class="text-light text-center fixed-bottom shadow-sm"
+        style="background-color: <?= htmlspecialchars($corTema ?: '#111') ?> !important;
+               border-top: 1px solid rgba(255,255,255,0.1);
+               line-height: 1;
+               padding: 4px 0;">
    <div class="container-fluid">
-      <div class="mb-1">
-         <img src="<?= htmlspecialchars($faviconPath) ?>" alt="Favicon" height="20">
+      <div style="margin-bottom: 2px;">
+         <img src="<?= htmlspecialchars($logoPath) ?>" alt="Favicon" style="height: 12px; width: auto;">
       </div>
-      <small>© <?= date('Y') ?> - <?= htmlspecialchars($nomeLoja) ?></small>
+      <small style="font-size: 9px; opacity: 0.8;">
+          © <?= date('Y') ?> - <?= htmlspecialchars($nomeLoja) ?>
+      </small>
    </div>
 </footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <!-- (Excell export) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -33,7 +39,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="<?= $base ?>public/js/pedidos.js"></script>
 <script src="<?= $base ?>public/js/cliente.js"></script>
-<script src="<?= $base ?>public/js/produto.js"></script>
+    <script src="<?= $base ?>public/js/produto.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
