@@ -55,7 +55,7 @@
                                                 <i class="bi bi-envelope-at text-muted me-1"></i> <?= htmlspecialchars($cliente['email']) ?>
                                             </span>
                                             <span class="text-white-50 small">
-                                                <i class="bi bi-whatsapp text-success me-1"></i> <?= htmlspecialchars($cliente['telefone']) ?>
+                                                <i class="bi bi-whatsapp text-success me-1"></i> <?= Utils::maskPhone($cliente['telefone']) ?>
                                             </span>
                                         </div>
                                     </td>

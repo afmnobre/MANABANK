@@ -70,6 +70,7 @@ $perfilUsuario = $usuarioLogado['perfil'] ?? 'Membro';
                 <li class="nav-item"><a class="nav-link" href="<?= $base ?>estatisticasjogos">Estatísticas</a></li>
                 <li class="nav-item"><a class="nav-link" href="<?= $base ?>produto">Produtos & Estoque</a></li>
                 <li class="nav-item"><a class="nav-link" href="<?= $base ?>relatorio">Relatórios</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $base ?>importacao">Ligamagic</a></li>
 
                 <li class="nav-item px-2 d-none d-lg-block">
                     <div class="vr h-100 bg-white" style="width: 1px; opacity: 0.5;"></div>
