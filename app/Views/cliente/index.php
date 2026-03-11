@@ -11,9 +11,18 @@
         <h2 class="text-white fw-bold mb-0">
             <i class="bi bi-people-fill me-2 text-primary"></i> Clientes da Loja
         </h2>
-        <a href="<?= $this->baseUrl ?>cliente/criar" class="btn btn-primary btn-sm shadow-sm px-3">
-            <i class="bi bi-person-plus-fill me-1"></i> Novo Cliente
-        </a>
+
+        <div class="d-flex gap-2">
+            <a href="<?= $this->baseUrl ?>cliente/qrcode_perfil" target="_blank" class="btn btn-info btn-sm shadow-sm px-3 fw-bold">
+                <i class="bi bi-qr-code-scan me-1"></i> QR Code Perfil
+            </a>
+
+            <a href="<?= $this->baseUrl ?>cliente/criar" class="btn btn-primary btn-sm shadow-sm px-3 fw-bold">
+                <i class="bi bi-person-plus-fill me-1"></i> Novo Cliente
+            </a>
+        </div>
+    </div>
+
     </div>
 
     <div class="card bg-dark border-secondary mb-4 shadow-sm">

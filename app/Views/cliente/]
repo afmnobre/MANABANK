@@ -213,22 +213,22 @@ class ClienteController extends Controller
 					$id_game = $rank['id_cardgame'];
 
 					// 1. QUERY BASE PARA O TOP 5 GERAL
-					$sqlBase = "SELECT c.nome, SUM(tr.pontos_totais) as pontos, tr.id_cliente
+					$sqlBase = "SELECT c.nome, SUM(tr.pontos_totais) as pontos, tr.id_cliente 
 								FROM torneio_resultados_finais tr
 								JOIN clientes c ON c.id_cliente = tr.id_cliente
 								JOIN torneios t ON t.id_torneio = tr.id_torneio
 								WHERE t.id_cardgame = :id_game AND t.id_loja = :id_loja";
 
 					// BUSCA TOP 5 MENSAL
-					$sqlMensal = $sqlBase . " AND MONTH(t.data_criacao) = MONTH(CURRENT_DATE())
-											 AND YEAR(t.data_criacao) = YEAR(CURRENT_DATE())
+					$sqlMensal = $sqlBase . " AND MONTH(t.data_criacao) = MONTH(CURRENT_DATE()) 
+											 AND YEAR(t.data_criacao) = YEAR(CURRENT_DATE()) 
 											 GROUP BY tr.id_cliente ORDER BY pontos DESC LIMIT 5";
 					$stmtM = $db->prepare($sqlMensal);
 					$stmtM->execute(['id_game' => $id_game, 'id_loja' => $id_loja]);
 					$rank['top5_mensal'] = $stmtM->fetchAll(PDO::FETCH_ASSOC);
 
 					// BUSCA TOP 5 ANUAL
-					$sqlAnual = $sqlBase . " AND YEAR(t.data_criacao) = YEAR(CURRENT_DATE())
+					$sqlAnual = $sqlBase . " AND YEAR(t.data_criacao) = YEAR(CURRENT_DATE()) 
 											GROUP BY tr.id_cliente ORDER BY pontos DESC LIMIT 5";
 					$stmtA = $db->prepare($sqlAnual);
 					$stmtA->execute(['id_game' => $id_game, 'id_loja' => $id_loja]);
@@ -236,13 +236,13 @@ class ClienteController extends Controller
 
 
 					// 2. BUSCA DE SALDO INDIVIDUAL DO CLIENTE (PARA A CÉLULA DA ESQUERDA)
-
+					
 					// Saldo Mensal Individual
-					$sqlMeuMensal = "SELECT SUM(tr.pontos_totais) as pontos
+					$sqlMeuMensal = "SELECT SUM(tr.pontos_totais) as pontos 
 									 FROM torneio_resultados_finais tr
 									 JOIN torneios t ON t.id_torneio = tr.id_torneio
-									 WHERE t.id_cardgame = :id_game
-									   AND t.id_loja = :id_loja
+									 WHERE t.id_cardgame = :id_game 
+									   AND t.id_loja = :id_loja 
 									   AND tr.id_cliente = :id_cliente
 									   AND MONTH(t.data_criacao) = MONTH(CURRENT_DATE())
 									   AND YEAR(t.data_criacao) = YEAR(CURRENT_DATE())";
@@ -251,11 +251,11 @@ class ClienteController extends Controller
 					$rank['meu_ponto_mensal'] = $stmtMeuM->fetch(PDO::FETCH_ASSOC)['pontos'] ?? 0;
 
 					// Saldo Anual Individual
-					$sqlMeuAnual = "SELECT SUM(tr.pontos_totais) as pontos
+					$sqlMeuAnual = "SELECT SUM(tr.pontos_totais) as pontos 
 									FROM torneio_resultados_finais tr
 									JOIN torneios t ON t.id_torneio = tr.id_torneio
-									WHERE t.id_cardgame = :id_game
-									  AND t.id_loja = :id_loja
+									WHERE t.id_cardgame = :id_game 
+									  AND t.id_loja = :id_loja 
 									  AND tr.id_cliente = :id_cliente
 									  AND YEAR(t.data_criacao) = YEAR(CURRENT_DATE())";
 					$stmtMeuA = $db->prepare($sqlMeuAnual);

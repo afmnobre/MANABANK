@@ -31,7 +31,7 @@ class ProdutoController extends Controller
             'emoji'             => $_POST['emoji'],
             'valor_venda'       => str_replace(',', '.', str_replace('.', '', $_POST['valor_venda'])),
             'valor_compra'      => str_replace(',', '.', str_replace('.', '', $_POST['valor_compra'])),
-            'controlar_estoque' => isset($_POST['controla_estoque']) ? 1 : 0,
+            'controlar_estoque' => isset($_POST['controlar_estoque']) ? 1 : 0,
             'estoque_atual'     => $_POST['estoque_atual'] ?? 0,
             'id_fornecedor'     => $_POST['id_fornecedor'] ?? null,
             'ativo'             => 1
