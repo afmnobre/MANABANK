@@ -134,29 +134,68 @@ function mascaraTelefone($numero) {
                 </div>
             </div>
 
-            <div class="card bg-dark border-secondary shadow-sm mb-4">
-                <div class="card-header bg-transparent border-secondary py-3 text-primary fw-bold text-uppercase tracking-wider small">
-                    <i class="bi bi-shield-check me-2"></i> Licença ManaBank
-                </div>
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="me-3">
-                            <i class="bi bi-file-earmark-text text-white-50 fs-2"></i>
-                        </div>
-                        <div>
-                            <p class="mb-0 text-white small">Nº Contrato: <strong><?= (!empty($contratoAtivo['numero_contrato'])) ? $contratoAtivo['numero_contrato'] : '---' ?></strong></p>
-                            <span class="badge bg-success-subtle text-success border border-success px-2 py-1 small" style="font-size: 0.7rem;">ATIVO</span>
-                        </div>
-                    </div>
-                    <button class="btn btn-outline-primary btn-sm w-100 fw-bold" onclick="abrirContratoLogado()">
-                        VISUALIZAR DOCUMENTO
-                    </button>
-                </div>
-                <div class="card-footer bg-transparent border-secondary py-2 d-flex justify-content-between">
-                    <a href="<?= $base ?>usuario/alterar-senha" class="text-white-50 small text-decoration-none hover-white"><i class="bi bi-key me-1"></i> Senha</a>
-                    <a href="<?= $base ?>usuario/editar-dados" class="text-white-50 small text-decoration-none hover-white"><i class="bi bi-person-gear me-1"></i> Perfil</a>
-                </div>
-            </div>
+			<div class="card bg-dark border-secondary shadow-sm mb-4">
+				<div class="card-header bg-transparent border-secondary py-3 text-primary fw-bold text-uppercase tracking-wider small">
+					<i class="bi bi-shield-check me-2"></i> Licença ManaBank
+				</div>
+				<div class="card-body">
+					<div class="d-flex align-items-center mb-3">
+						<div class="me-3">
+							<i class="bi bi-file-earmark-text text-white-50 fs-2"></i>
+						</div>
+						<div>
+							<p class="mb-0 text-white small">Nº Contrato: <strong><?= (!empty($contratoAtivo['numero_contrato'])) ? $contratoAtivo['numero_contrato'] : '---' ?></strong></p>
+
+							<div class="d-flex align-items-center gap-2 mt-1">
+								<?php
+									// Cálculo de dias usando a coluna 'data_fim' da sua tabela
+									$dataExp = !empty($contratoAtivo['data_fim']) ? new DateTime($contratoAtivo['data_fim']) : null;
+									$hoje = new DateTime();
+
+									// Resetamos as horas para garantir que o cálculo considere apenas os dias
+									$hoje->setTime(0,0,0);
+									if($dataExp) $dataExp->setTime(0,0,0);
+
+									$vencido = ($dataExp && $hoje > $dataExp);
+									$diasRestantes = $dataExp ? (int)$hoje->diff($dataExp)->format("%r%a") : 0;
+
+									if ($vencido):
+								?>
+									<span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1 small" style="font-size: 0.7rem;">EXPIRADO</span>
+									<small class="text-danger fw-bold" style="font-size: 0.7rem;">(<?= abs($diasRestantes) ?> dias de atraso)</small>
+								<?php else: ?>
+									<span class="badge bg-success-subtle text-success border border-success px-2 py-1 small" style="font-size: 0.7rem;">ATIVO</span>
+									<small class="text-white-50" style="font-size: 0.7rem;"><i class="bi bi-clock me-1"></i><?= $diasRestantes ?> dias restantes</small>
+								<?php endif; ?>
+							</div>
+						</div>
+					</div>
+
+					<button class="btn btn-outline-secondary btn-sm w-100 fw-bold mb-2" onclick="abrirContratoLogado()" style="font-size: 0.75rem;">
+						<i class="bi bi-eye me-1"></i> VISUALIZAR DOCUMENTO
+					</button>
+
+					<?php
+						$btnColor = "btn-primary";
+						$labelRenovar = "RENOVAR ASSINATURA";
+
+						if ($diasRestantes <= 15 && $diasRestantes > 0) {
+							$btnColor = "btn-warning";
+							$labelRenovar = "RENOVAR (VENCE EM $diasRestantes DIAS)";
+						} elseif ($vencido) {
+							$btnColor = "btn-danger";
+							$labelRenovar = "REGULARIZAR LICENÇA";
+						}
+					?>
+					<button class="btn <?= $btnColor ?> btn-sm w-100 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalRenovacao">
+						<i class="bi bi-arrow-repeat me-1"></i> <?= $labelRenovar ?>
+					</button>
+				</div>
+				<div class="card-footer bg-transparent border-secondary py-2 d-flex justify-content-between">
+					<a href="<?= $base ?>usuario/alterar-senha" class="text-white-50 small text-decoration-none hover-white"><i class="bi bi-key me-1"></i> Senha</a>
+					<a href="<?= $base ?>usuario/editar-dados" class="text-white-50 small text-decoration-none hover-white"><i class="bi bi-person-gear me-1"></i> Perfil</a>
+				</div>
+			</div>
         </div>
     </div>
 </div>
@@ -249,3 +288,73 @@ window.imprimirContrato = function() {
     window.print();
 }
 </script>
+
+<div class="modal fade" id="modalRenovacao" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="background-color: #161b22; color: white;">
+
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-arrow-repeat text-primary me-2"></i>Renovação ManaBank
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <div class="bg-dark p-3 rounded border border-secondary mb-4">
+                    <div class="d-flex justify-content-between small mb-2">
+                        <span class="text-white-50">Contrato Atual:</span>
+                        <span class="fw-bold"><?= $contratoAtivo['numero_contrato'] ?></span>
+                    </div>
+                    <div class="d-flex justify-content-between small mb-2">
+                        <span class="text-white-50">Vence em:</span>
+                        <span class="fw-bold text-warning"><?= date('d/m/Y', strtotime($contratoAtivo['data_fim'])) ?></span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-white-50">Tipo:</span>
+                        <span class="badge bg-primary-subtle text-primary text-uppercase"><?= $contratoAtivo['tipo'] ?></span>
+                    </div>
+                </div>
+
+                <h6 class="small fw-bold text-uppercase mb-3">Escolha o período de renovação:</h6>
+
+				<form action="<?= $base ?>contrato/gerarpagamento" method="POST" target="_blank">
+					<input type="hidden" name="id_loja" value="<?= $loja['id_loja'] ?>">
+
+					<?php if(isset($planos['anual'])): ?>
+					<div class="card bg-dark border-primary mb-3">
+						<div class="card-body d-flex align-items-center">
+							<input class="form-check-input me-3" type="radio" name="tipo_renovacao" value="anual" id="planAnual" checked>
+							<label class="form-check-label w-100" for="planAnual">
+								<div class="d-flex justify-content-between align-items-center">
+									<span><?= $planos['anual']['nome'] ?></span>
+									<span class="fw-bold text-primary">R$ <?= number_format($planos['anual']['valor'], 2, ',', '.') ?></span>
+								</div>
+								<small class="text-white-50 d-block">Economia garantida e suporte VIP</small>
+							</label>
+						</div>
+					</div>
+					<?php endif; ?>
+
+					<?php if(isset($planos['mensal'])): ?>
+					<div class="card bg-dark border-secondary mb-4">
+						<div class="card-body d-flex align-items-center">
+							<input class="form-check-input me-3" type="radio" name="tipo_renovacao" value="mensal" id="planMensal">
+							<label class="form-check-label w-100" for="planMensal">
+								<div class="d-flex justify-content-between align-items-center">
+									<span><?= $planos['mensal']['nome'] ?></span>
+									<span class="fw-bold">R$ <?= number_format($planos['mensal']['valor'], 2, ',', '.') ?></span>
+								</div>
+							</label>
+						</div>
+					</div>
+					<?php endif; ?>
+
+					<button type="submit" class="btn btn-primary w-100 py-3 fw-bold">
+						GERAR PAGAMENTO NO MERCADO PAGO
+					</button>
+				</form>
+            </div>
+        </div>
+    </div>
+</div>

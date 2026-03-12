@@ -148,6 +148,38 @@ class Home
 		$stmt->execute(['id_loja' => $idLoja]);
 		return $stmt->fetch(PDO::FETCH_ASSOC);
 	}
+
+	public function buscarPlanos()
+	{
+		// O Model já tem acesso ao banco de dados (geralmente via $this->db)
+		$sql = "SELECT * FROM planos";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute();
+		return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+	public function renovarContrato($referencia) {
+		// Identifica se é Anual ou Mensal pelo sufixo da referência
+		$dias = (strpos($referencia, 'ANU') !== false) ? 365 : 30;
+
+		// Extrai o ID da loja (ex: de "5202603ANU", pega o 5)
+		$id_loja = explode('202', $referencia)[0];
+
+		// SQL que soma dias se estiver ativo ou renova a partir de hoje se estiver vencido
+		$sql = "UPDATE contratos SET
+				data_fim = DATE_ADD(IF(data_fim > NOW(), data_fim, NOW()), INTERVAL :dias DAY),
+				status = 'ativo'
+				WHERE id_loja = :id_loja AND status = 'ativo'";
+
+		$stmt = $this->db->prepare($sql);
+		$stmt->bindValue(':dias', $dias, PDO::PARAM_INT);
+		$stmt->bindValue(':id_loja', $id_loja, PDO::PARAM_INT);
+		return $stmt->execute();
+	}
+
+
+
+
 }
 
 
