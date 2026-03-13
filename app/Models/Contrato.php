@@ -86,4 +86,15 @@ class Contrato
         $stmt->execute(['id_loja' => $id_loja]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+public function checarStatusContrato($id_loja) {
+    $sql = "SELECT status FROM contratos WHERE loja_id = :id LIMIT 1";
+    $db = Database::conectar();
+    $stmt = $db->prepare($sql);
+    $stmt->execute(['id' => $id_loja]);
+    $res = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $res['status'] ?? 'pendente';
+}
+
+
 }

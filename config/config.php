@@ -6,4 +6,7 @@ return [
     'db_user' => 'root',
     'db_pass' => 'NovaSenhaForteAqui',
     'base_url' => '/',
+
+    // URL do Túnel Cloudflare para o Mercado Pago conseguir acessar seu Localhost
+    'mercadopago_url' => 'https://museum-existed-seasonal-proprietary.trycloudflare.com/MANABANK/',
 ];
