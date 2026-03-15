@@ -1,3 +1,21 @@
+<?php
+// 1. Pegamos o caminho do arquivo
+$configPath = dirname(__DIR__, 3) . '/config/config.php';
+
+// 2. Usamos require (sem o _once) para garantir que o retorno seja o array do arquivo
+$config = require $configPath;
+
+// 3. Define a constante BASE_URL globalmente se ela ainda não existir
+// Se por acaso $config for booleano, pegamos um fallback
+if (!defined('BASE_URL')) {
+    $baseUrlValue = (is_array($config) && isset($config['base_url'])) ? $config['base_url'] : '/MANABANK/';
+    define('BASE_URL', $baseUrlValue);
+}
+
+// 4. Define as variáveis de caminho
+$base = BASE_URL;
+$baseAssetUrl = $base . 'public';
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -121,13 +139,31 @@
         }
 
         .text-cyan { color: var(--mana-primary); }
+
+        #modalDemo .modal-content {
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+        }
+
+		.carousel-item img, .carousel-item .ratio {
+			border-radius: 12px; /* Suaviza as bordas internas */
+			overflow: hidden;
+		}
+
+		.carousel-control-prev, .carousel-control-next {
+			width: 5%; /* Deixa as setas mais sutis */
+		}
+
+		/* Garante que o container do carrossel mantenha o aspecto */
+		.mockup-container {
+			background-color: #000;
+		}
     </style>
 </head>
 <body>
 
     <nav class="navbar navbar-expand-lg navbar-dark pt-4">
         <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="<?php echo $base; ?>">
                 <i class="bi bi-cpu-fill text-cyan me-2"></i> MANABANK
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -152,14 +188,60 @@
                     <p class="lead text-secondary mb-5">O <strong>MANABANK</strong> é o ecossistema definitivo para gerir torneios, fidelizar jogadores e controlar seu estoque de TCG em um só lugar.</p>
                     <div class="d-flex gap-3">
                         <a href="#precos" class="btn btn-mana text-uppercase">Começar Agora</a>
-                        <button class="btn btn-outline-light px-4 py-2 fw-bold">Ver Demo</button>
+                        <button class="btn btn-outline-light px-4 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#modalDemo">Ver Demo</button>
                     </div>
                 </div>
-                <div class="col-lg-6 mt-5 mt-lg-0">
-                    <div class="mockup-container">
-                        <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=1000" class="img-fluid" alt="Dashboard Manabank">
-                    </div>
-                </div>
+				<div class="col-lg-6 mt-5 mt-lg-0">
+					<div class="mockup-container shadow-lg">
+						<div id="carouselHero" class="carousel slide carousel-fade" data-bs-ride="carousel">
+							<div class="carousel-indicators">
+								<button type="button" data-bs-target="#carouselHero" data-bs-slide-to="0" class="active"></button>
+								<button type="button" data-bs-target="#carouselHero" data-bs-slide-to="1"></button>
+								<button type="button" data-bs-target="#carouselHero" data-bs-slide-to="2"></button>
+								<button type="button" data-bs-target="#carouselHero" data-bs-slide-to="3"></button>
+							</div>
+
+							<div class="carousel-inner">
+								<div class="carousel-item active">
+									<div class="ratio ratio-16x9">
+										<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&showinfo=0&modestbranding=1"
+												title="Apresentação Manabank" allowfullscreen></iframe>
+									</div>
+								</div>
+
+								<div class="carousel-item">
+									<div class="ratio ratio-16x9">
+										<img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=1000"
+											 class="d-block w-100 object-fit-cover" alt="Gestão de Estoque">
+									</div>
+								</div>
+
+								<div class="carousel-item">
+									<div class="ratio ratio-16x9">
+										<img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=1000"
+											 class="d-block w-100 object-fit-cover" alt="Torneios TCG">
+									</div>
+								</div>
+
+								<div class="carousel-item">
+									<div class="ratio ratio-16x9">
+										<img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=1000"
+											 class="d-block w-100 object-fit-cover" alt="Comunidade Nerd">
+									</div>
+								</div>
+							</div>
+
+							<button class="carousel-control-prev" type="button" data-bs-target="#carouselHero" data-bs-slide="prev">
+								<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+								<span class="visually-hidden">Anterior</span>
+							</button>
+							<button class="carousel-control-next" type="button" data-bs-target="#carouselHero" data-bs-slide="next">
+								<span class="carousel-control-next-icon" aria-hidden="true"></span>
+								<span class="visually-hidden">Próximo</span>
+							</button>
+						</div>
+					</div>
+				</div>
             </div>
         </div>
     </header>
@@ -211,9 +293,7 @@
                 <div class="col-lg-7 text-center">
                      <div class="p-4 bg-dark rounded border border-secondary shadow">
                         <div class="row g-2">
-                            <div class="col-4 bg-white rounded-start p-3 text-dark small fw-bold">LOGO JOGO</div>
-                            <div class="col-4 bg-dark p-3 border-start border-secondary small">RANK MENSAL</div>
-                            <div class="col-4 bg-secondary p-3 rounded-end small">RANK ANUAL</div>
+                             <img src='<?php echo $baseAssetUrl; ?>/storage/uploads/landing/TorneioJogador.png' class="img-fluid" alt="Ranking">
                         </div>
                         <p class="mt-3 text-white-50 small italic">Exemplo do Painel Público do Jogador</p>
                      </div>
@@ -222,67 +302,67 @@
         </div>
     </section>
 
-<section id="precos" class="py-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold text-white">Escolha seu Plano</h2>
-            <p class="text-secondary">Assine agora e configure sua loja em poucos minutos.</p>
-        </div>
+    <section id="precos" class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold text-white">Escolha seu Plano</h2>
+                <p class="text-secondary">Assine agora e configure sua loja em poucos minutos.</p>
+            </div>
 
-        <div class="row g-4 justify-content-center">
-            <?php
-            if (!empty($planos) && is_array($planos)):
-                foreach ($planos as $p):
-                    // 1. Sanitização preventiva para evitar quebras
-                    $slug  = isset($p['slug']) ? $p['slug'] : '';
-                    $nome  = isset($p['nome']) ? $p['nome'] : 'Plano';
-                    $valor = isset($p['valor']) ? (float)$p['valor'] : 0;
-                    $id    = isset($p['id']) ? $p['id'] : '';
-                    $dias  = isset($p['intervalo_dias']) ? $p['intervalo_dias'] : '0';
+            <div class="row g-4 justify-content-center">
+                <?php
+                if (!empty($planos) && is_array($planos)):
+                    foreach ($planos as $p):
+                        // 1. Sanitização preventiva
+                        $slug  = isset($p['slug']) ? $p['slug'] : '';
+                        $nome  = isset($p['nome']) ? $p['nome'] : 'Plano';
+                        $valor = isset($p['valor']) ? (float)$p['valor'] : 0;
+                        $id    = isset($p['id']) ? $p['id'] : '';
+                        $dias  = isset($p['intervalo_dias']) ? $p['intervalo_dias'] : '0';
 
-                    // 2. Definição visual
-                    $isAnual = ($slug === 'anual');
-                    $borderClass = $isAnual ? 'border-mana' : '';
-                    $labelTempo = $isAnual ? '/ano' : '/mês';
+                        // 2. Definição visual
+                        $isAnual = ($slug === 'anual');
+                        $borderClass = $isAnual ? 'border-mana' : '';
+                        $labelTempo = $isAnual ? '/ano' : '/mês';
 
-                    // 3. Proteção para a URL (Evita o Fatal Error Undefined Constant)
-                    $urlBase = defined('BASE_URL') ? BASE_URL : '/';
-            ?>
-                <div class="col-md-5">
-                    <div class="price-card shadow-lg <?php echo $borderClass; ?>">
+                        // 3. Proteção para a URL (Usa a constante definida no topo)
+                        $urlBaseForm = defined('BASE_URL') ? BASE_URL : $base;
+                ?>
+                    <div class="col-md-5">
+                        <div class="price-card shadow-lg <?php echo $borderClass; ?>">
 
-                        <?php if($isAnual): ?>
-                            <span class="badge-new mb-3 d-inline-block">MELHOR CUSTO-BENEFÍCIO</span>
-                        <?php endif; ?>
+                            <?php if($isAnual): ?>
+                                <span class="badge-new mb-3 d-inline-block">MELHOR CUSTO-BENEFÍCIO</span>
+                            <?php endif; ?>
 
-                        <h2 class="fw-bold mb-3"><?php echo htmlspecialchars($nome); ?></h2>
+                            <h2 class="fw-bold mb-3"><?php echo htmlspecialchars($nome); ?></h2>
 
-                        <div class="display-4 fw-bold mb-4 text-cyan">
-                            R$ <?php echo number_format($valor, 2, ',', '.'); ?>
-                            <small class="fs-6 text-white-50"><?php echo $labelTempo; ?></small>
+                            <div class="display-4 fw-bold mb-4 text-cyan">
+                                R$ <?php echo number_format($valor, 2, ',', '.'); ?>
+                                <small class="fs-6 text-white-50"><?php echo $labelTempo; ?></small>
+                            </div>
+
+                            <ul class="list-unstyled text-start mb-4 text-secondary">
+                                <li class="mb-2"><i class="bi bi-check2 text-cyan me-2"></i> Todos os módulos inclusos</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-cyan me-2"></i> Gestão de atendentes</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-cyan me-2"></i> Suporte Prioritário</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-cyan me-2"></i> Período: <?php echo $dias; ?> dias</li>
+                            </ul>
+
+                            <form action="<?php echo $urlBaseForm; ?>landing/configurar" method="POST">
+                                <input type="hidden" name="plano_id" value="<?php echo $id; ?>">
+                                <input type="hidden" name="plano_slug" value="<?php echo $slug; ?>">
+                                <button type="submit" class="btn btn-mana btn-lg text-uppercase w-100">Contratar Agora</button>
+                            </form>
                         </div>
-
-                        <ul class="list-unstyled text-start mb-4 text-secondary">
-                            <li class="mb-2"><i class="bi bi-check2 text-cyan me-2"></i> Todos os módulos inclusos</li>
-                            <li class="mb-2"><i class="bi bi-check2 text-cyan me-2"></i> Gestão de atendentes</li>
-                            <li class="mb-2"><i class="bi bi-check2 text-cyan me-2"></i> Suporte Prioritário</li>
-                            <li class="mb-2"><i class="bi bi-check2 text-cyan me-2"></i> Período: <?php echo $dias; ?> dias</li>
-                        </ul>
-
-                        <form action="<?php echo $urlBase; ?>landing/configurar" method="POST">
-                            <input type="hidden" name="plano_id" value="<?php echo $id; ?>">
-                            <input type="hidden" name="plano_slug" value="<?php echo $slug; ?>">
-                            <button type="submit" class="btn btn-mana btn-lg text-uppercase w-100">Contratar Agora</button>
-                        </form>
                     </div>
-                </div>
-            <?php
-                endforeach;
-            endif;
-            ?>
+                <?php
+                    endforeach;
+                endif;
+                ?>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
     <footer class="footer mt-5 text-center">
         <div class="container">
@@ -300,3 +380,46 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
+<div class="modal fade" id="modalDemo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background-color: var(--mana-card); border: 1px solid var(--mana-primary); border-radius: 16px;">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-white">
+                    <i class="bi bi-rocket-takeoff text-cyan me-2"></i>Acesso à Loja de Teste
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-secondary mb-4 small">Utilize as credenciais abaixo para explorar o painel administrativo da nossa loja modelo.</p>
+
+                <div class="mb-3">
+                    <label class="text-cyan small fw-bold text-uppercase">Perfil de Acesso</label>
+                    <div class="p-2 bg-dark rounded border border-secondary text-white">Gerente</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-cyan small fw-bold text-uppercase">Usuário</label>
+                    <div class="p-2 bg-dark rounded border border-secondary text-white d-flex justify-content-between align-items-center">
+                        teste@cardgame.com
+                        <i class="bi bi-person-fill text-secondary"></i>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="text-cyan small fw-bold text-uppercase">Senha</label>
+                    <div class="p-2 bg-dark rounded border border-secondary text-white d-flex justify-content-between align-items-center">
+                        123456789
+                        <i class="bi bi-lock-fill text-secondary"></i>
+                    </div>
+                </div>
+
+                <a href="https://magic.4sql.net/MANABANK/login" target="_blank" class="btn btn-mana w-100 text-uppercase py-3">
+                    Acessar Loja Agora <i class="bi bi-box-arrow-up-right ms-2"></i>
+                </a>
+                <p class="text-center mt-3 text-white-50 small">A URL será aberta em uma nova guia.</p>
+            </div>
+        </div>
+    </div>
+</div>

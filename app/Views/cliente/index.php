@@ -61,7 +61,7 @@
                                     <td>
                                         <div class="d-flex flex-column">
                                             <span class="text-white small">
-                                                <i class="bi bi-envelope-at text-muted me-1"></i> <?= htmlspecialchars($cliente['email']) ?>
+                                                <i class="bi bi-envelope-at text-warning me-1"></i> <?= htmlspecialchars($cliente['email']) ?>
                                             </span>
                                             <span class="text-white-50 small">
                                                 <i class="bi bi-whatsapp text-success me-1"></i> <?= Utils::maskPhone($cliente['telefone']) ?>

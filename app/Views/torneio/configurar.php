@@ -45,7 +45,7 @@
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="form-text text-muted small">Define o ranking de pontuação.</div>
+                            <div class="form-text text-white-50 small">Define o cardgame que sera feito o torneio.</div>
                         </div>
                     </div>
 

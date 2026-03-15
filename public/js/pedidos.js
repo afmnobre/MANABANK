@@ -159,14 +159,25 @@ window.initCalendario = function(datasPendentes, dataSelecionada) {
             altFormat: "d/m/Y",
             defaultDate: dataSelecionada,
             onDayCreate: function (dObj, dStr, fp, dayElem) {
-                const data = dayElem.dateObj.toISOString().split('T')[0];
-                if (datasPendentes && datasPendentes.includes(data)) {
+                // Ajuste para pegar a data local correta (YYYY-MM-DD)
+                const date = dayElem.dateObj;
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const dataFormatada = `${year}-${month}-${day}`;
+
+                if (datasPendentes && datasPendentes.includes(dataFormatada)) {
                     dayElem.classList.add("has-pedido");
-                    dayElem.title = "Pedido não pago";
+                    dayElem.style.backgroundColor = "#ff4d4d"; // Vermelho ManaBank
+                    dayElem.style.color = "white";
+                    dayElem.style.borderRadius = "50%";
+                    dayElem.title = "Há pedidos não pagos";
                 }
             },
             onChange: function (selectedDates, dateStr) {
-                window.location = '?data=' + dateStr;
+                if(dateStr) {
+                    window.location = '?data=' + dateStr;
+                }
             }
         });
     }

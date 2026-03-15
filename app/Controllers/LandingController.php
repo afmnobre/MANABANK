@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../../core/Autoload.php';
+
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 
@@ -69,9 +71,8 @@ class LandingController extends Controller
     {
         $ref = $_GET['external_reference'] ?? '';
 
-        // Se não houver referência, volta para o início
         if (empty($ref)) {
-            header("Location: " . $this->baseUrl);
+            header("Location: /");
             exit();
         }
 
@@ -79,7 +80,8 @@ class LandingController extends Controller
         $partes = explode('_', $ref);
         $slug_plano = strtolower($partes[1] ?? 'mensal');
 
-        $this->rawView('onboarding/configurar_loja', [
+        // Carrega a View de configuração inicial da loja que você criou
+        $this->rawView('onboarding/ConfigurarLoja', [
             'ref' => $ref,
             'plano_slug' => $slug_plano
         ]);
@@ -140,6 +142,48 @@ class LandingController extends Controller
 		}
 	}
 
+    public function configurar()
+    {
+        $slug = $_POST['plano_slug'] ?? 'mensal';
 
+        $landingModel = new Landing();
+        $plano = $landingModel->buscarPlanoPorSlug($slug);
+
+        if (!$plano) die('Plano inválido');
+
+        // Access Token fornecido
+        $accessToken = "APP_USR-7375586212182131-031117-e0f372023b1aade14a82e6345f8e9a83-3261191138";
+        MercadoPagoConfig::setAccessToken($accessToken);
+
+        // Define a URL de retorno usando a BASE_URL do sistema
+        $urlRetorno = (defined('BASE_URL') ? BASE_URL : 'http://' . $_SERVER['HTTP_HOST'] . '/');
+
+        // Referência para identificarmos que é uma NOVA loja no retorno
+        $referencia_externa = "NEW_" . strtoupper($slug) . "_" . time();
+
+        $client = new PreferenceClient();
+        try {
+            $preference = $client->create([
+                "external_reference" => $referencia_externa,
+                "items" => [[
+                    "title" => "Assinatura MANABANK - " . $plano['nome'],
+                    "quantity" => 1,
+                    "unit_price" => (float) $plano['valor'],
+                    "currency_id" => "BRL"
+                ]],
+                "back_urls" => [
+                    "success" => $urlRetorno . "landing/sucesso",
+                    "failure" => $urlRetorno . "landing",
+                    "pending" => $urlRetorno . "landing"
+                ],
+                "auto_return" => "approved"
+            ]);
+
+            header("Location: " . $preference->init_point);
+            exit();
+        } catch (Exception $e) {
+            echo "Erro ao gerar preferência no Mercado Pago: " . $e->getMessage();
+        }
+    }
 
 }

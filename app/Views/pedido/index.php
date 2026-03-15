@@ -101,26 +101,32 @@
                         <thead>
                             <tr class="small text-muted border-secondary bg-black">
                                 <th class="ps-4 border-secondary py-3">CLIENTE</th>
-									<?php foreach ($produtos as $produto): ?>
-										<?php
-											// Convertemos para int e removemos qualquer erro de tipo ou espaço
-											$controlar = (int)($produto['controlar_estoque'] ?? 0);
-											$estoqueAtual = (int)($produto['estoque_atual'] ?? 0);
-											$estoqueAlerta = (int)($produto['estoque_alerta'] ?? 0);
+								<?php foreach ($produtos as $produto): ?>
+									<?php
+										// Garantimos que os valores sejam tratados como números
+										$controlar = (int)($produto['controlar_estoque'] ?? 0);
+										$estoqueAtual = (int)($produto['estoque_atual'] ?? 0);
+										$estoqueAlerta = (int)($produto['estoque_alerta'] ?? 0);
 
-											// Condição para o alerta
-											$emAlerta = ($controlar === 1 && $estoqueAtual <= $estoqueAlerta);
+										// O alerta deve disparar se o controle estiver ativo E o estoque for menor ou igual ao alerta
+										$emAlerta = ($controlar === 1 && $estoqueAtual <= $estoqueAlerta);
 
-											// Forçamos a cor com !important se necessário, ou usamos classes mais fortes
-											$classeAlerta = $emAlerta ? 'text-danger fw-bold bg-dark-danger' : '';
-										?>
-										<th class="text-center border-secondary <?= $classeAlerta ?>">
-											<span style="<?= $emAlerta ? 'color: #ff4444 !important;' : '' ?>">
-												<?= htmlspecialchars($produto['emoji']) ?> <br>
-												<small><?= htmlspecialchars($produto['nome']) ?></small>
-											</span>
-										</th>
-									<?php endforeach; ?>
+										// Criamos um estilo inline de segurança para o fundo se estiver em alerta
+										$styleAlerta = $emAlerta ? 'background-color: rgba(255, 68, 68, 0.15) !important;' : '';
+										$colorAlerta = $emAlerta ? 'color: #ff4444 !important;' : '';
+									?>
+									<th class="text-center border-secondary" style="<?= $styleAlerta ?>">
+										<span style="<?= $colorAlerta ?> display: block; width: 100%;">
+											<span style="font-size: 1.2rem;"><?= htmlspecialchars($produto['emoji']) ?></span> <br>
+											<small class="<?= $emAlerta ? 'fw-bold' : '' ?>" style="font-size: 0.75rem;">
+												<?= htmlspecialchars($produto['nome']) ?>
+											</small>
+											<?php if ($emAlerta): ?>
+												<br><span class="badge bg-danger" style="font-size: 0.6rem;">ESTOQUE BAIXO</span>
+											<?php endif; ?>
+										</span>
+									</th>
+								<?php endforeach; ?>
 
                                 <th class="text-center border-secondary">VARIADO</th>
                                 <th class="text-center border-secondary">TOTAL</th>
